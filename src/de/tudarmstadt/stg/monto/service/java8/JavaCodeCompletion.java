@@ -22,7 +22,7 @@ public class JavaCodeCompletion extends MontoService {
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException, ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        ProductMessage ast = Messages.getProductMessage(messages, Products.AST, Languages.JSON);
+        ProductMessage ast = Messages.getProductMessage(messages, JavaServices.AST, JavaServices.JSON);
         if (version.getSelections().size() > 0) {
             AST root = ASTs.decode(ast);
             List<Completion> allcompletions = allCompletions(version.getContent(), root);
@@ -46,8 +46,8 @@ public class JavaCodeCompletion extends MontoService {
                         version.getVersionId(),
                         new LongKey(1),
                         version.getSource(),
-                        Products.COMPLETIONS,
-                        Languages.JSON,
+                        JavaServices.COMPLETIONS,
+                        JavaServices.JSON,
                         content,
                         new ProductDependency(ast));
             }

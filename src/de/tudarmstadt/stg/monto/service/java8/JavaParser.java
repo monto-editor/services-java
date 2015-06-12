@@ -51,8 +51,8 @@ public class JavaParser extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                Products.AST,
-                Languages.JSON,
+                JavaServices.AST,
+                JavaServices.JSON,
                 content);
     }
 

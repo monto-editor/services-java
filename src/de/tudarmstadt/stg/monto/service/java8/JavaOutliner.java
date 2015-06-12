@@ -20,7 +20,7 @@ public class JavaOutliner extends MontoService {
     @Override
     public ProductMessage onMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        ProductMessage ast = Messages.getProductMessage(messages, Products.AST, Languages.JSON);
+        ProductMessage ast = Messages.getProductMessage(messages, JavaServices.AST, JavaServices.JSON);
         NonTerminal root = (NonTerminal) ASTs.decode(ast);
 
         OutlineTrimmer trimmer = new OutlineTrimmer();
@@ -31,8 +31,8 @@ public class JavaOutliner extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                Products.OUTLINE,
-                Languages.JSON,
+                JavaServices.OUTLINE,
+                JavaServices.JSON,
                 content,
                 new ProductDependency(ast));
 
