@@ -1,9 +1,6 @@
-package de.tudarmstadt.stg.monto.service;
+package de.tudarmstadt.stg.monto.service.java8;
 
-import de.tudarmstadt.stg.monto.service.java8.JavaCodeCompletion;
-import de.tudarmstadt.stg.monto.service.java8.JavaOutliner;
-import de.tudarmstadt.stg.monto.service.java8.JavaParser;
-import de.tudarmstadt.stg.monto.service.java8.JavaTokenizer;
+import de.tudarmstadt.stg.monto.service.MontoService;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
