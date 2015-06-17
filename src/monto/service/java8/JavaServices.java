@@ -1,8 +1,8 @@
-package de.tudarmstadt.stg.monto.service.java8;
+package monto.service.java8;
 
-import de.tudarmstadt.stg.monto.service.MontoService;
-import de.tudarmstadt.stg.monto.service.message.Language;
-import de.tudarmstadt.stg.monto.service.message.Product;
+import monto.service.MontoService;
+import monto.service.message.Language;
+import monto.service.message.Product;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 

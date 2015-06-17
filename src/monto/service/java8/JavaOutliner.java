@@ -1,10 +1,10 @@
-package de.tudarmstadt.stg.monto.service.java8;
+package monto.service.java8;
 
-import de.tudarmstadt.stg.monto.service.MontoService;
-import de.tudarmstadt.stg.monto.service.ast.*;
-import de.tudarmstadt.stg.monto.service.message.*;
-import de.tudarmstadt.stg.monto.service.outline.Outline;
-import de.tudarmstadt.stg.monto.service.outline.Outlines;
+import monto.service.MontoService;
+import monto.service.ast.*;
+import monto.service.message.*;
+import monto.service.outline.Outline;
+import monto.service.outline.Outlines;
 import org.zeromq.ZMQ;
 
 import java.util.ArrayDeque;

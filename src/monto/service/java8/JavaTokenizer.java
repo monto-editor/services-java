@@ -1,11 +1,11 @@
-package de.tudarmstadt.stg.monto.service.java8;
+package monto.service.java8;
 
-import de.tudarmstadt.stg.monto.service.MontoService;
-import de.tudarmstadt.stg.monto.service.java8.antlr.Java8Lexer;
-import de.tudarmstadt.stg.monto.service.message.*;
-import de.tudarmstadt.stg.monto.service.token.Category;
-import de.tudarmstadt.stg.monto.service.token.Token;
-import de.tudarmstadt.stg.monto.service.token.Tokens;
+import monto.service.java8.antlr.Java8Lexer;
+import monto.service.MontoService;
+import monto.service.message.*;
+import monto.service.token.Category;
+import monto.service.token.Token;
+import monto.service.token.Tokens;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.zeromq.ZMQ;
 

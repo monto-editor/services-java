@@ -1,4 +1,4 @@
-package de.tudarmstadt.stg.monto.service.java8;
+package monto.service.java8;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -6,14 +6,14 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
-import de.tudarmstadt.stg.monto.service.MontoService;
-import de.tudarmstadt.stg.monto.service.ast.AST;
-import de.tudarmstadt.stg.monto.service.ast.ASTs;
-import de.tudarmstadt.stg.monto.service.ast.NonTerminal;
-import de.tudarmstadt.stg.monto.service.ast.Terminal;
-import de.tudarmstadt.stg.monto.service.java8.antlr.Java8Lexer;
-import de.tudarmstadt.stg.monto.service.java8.antlr.Java8Parser;
-import de.tudarmstadt.stg.monto.service.message.*;
+import monto.service.java8.antlr.Java8Lexer;
+import monto.service.java8.antlr.Java8Parser;
+import monto.service.MontoService;
+import monto.service.ast.AST;
+import monto.service.ast.ASTs;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
+import monto.service.message.*;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
