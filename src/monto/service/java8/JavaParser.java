@@ -1,18 +1,12 @@
 package monto.service.java8;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
-import monto.service.java8.antlr.Java8Lexer;
-import monto.service.java8.antlr.Java8Parser;
 import monto.service.MontoService;
 import monto.service.ast.AST;
 import monto.service.ast.ASTs;
 import monto.service.ast.NonTerminal;
 import monto.service.ast.Terminal;
+import monto.service.java8.antlr.Java8Lexer;
+import monto.service.java8.antlr.Java8Parser;
 import monto.service.message.*;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -21,17 +15,27 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.zeromq.ZMQ;
+import org.zeromq.ZContext;
+
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 public class JavaParser extends MontoService {
+
+    private static final Product AST = new Product("ast");
+    private static final Language JAVA = new Language("java");
 
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     Java8Parser parser = new Java8Parser(tokens);
 
-    public JavaParser(String address, ZMQ.Context context) {
-        super(address, context);
+    public JavaParser(ZContext context, String address, int registrationPort, String serviceID) {
+        super(context, address, registrationPort, serviceID, AST, JAVA, new String[]{});
     }
+
 
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException {
@@ -51,8 +55,8 @@ public class JavaParser extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                JavaServices.AST,
-                JavaServices.JSON,
+                AST,
+                JAVA,
                 content);
     }
 

@@ -1,43 +1,36 @@
 package monto.service.java8;
 
 import monto.service.MontoService;
-import monto.service.message.Language;
-import monto.service.message.Product;
-import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Context;
+import org.zeromq.ZContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaServices {
 
-    public static final Language JSON = new Language("json");
-    public static final Product TOKENS = new Product("tokens");
-    public static final Product AST = new Product("ast");
-    public static final Product OUTLINE = new Product("outline");
-    public static final Product COMPLETIONS = new Product("completions");
+    private static final int regPort = 5009;
 
     public static void main(String[] args) {
+        ZContext context = new ZContext(1);
         String addr = "tcp://localhost:";
         List<MontoService> services = new ArrayList<>();
-        Context context = ZMQ.context(1);
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 System.out.println("terminating...");
-                context.term();
                 for (MontoService service : services) {
                     service.stop();
                 }
-                System.out.println("terminated");
+                context.destroy();
+                System.out.println("everything terminated, good bye");
             }
         });
 
-        services.add(new JavaTokenizer(addr + 5010, context));
-        services.add(new JavaParser(addr + 5011, context));
-        services.add(new JavaOutliner(addr + 5012, context));
-        services.add(new JavaCodeCompletion(addr + 5013, context));
+        services.add(new JavaTokenizer(context, addr, regPort, "javaTokenizer"));
+        services.add(new JavaParser(context, addr, regPort, "javaParser"));
+        services.add(new JavaOutliner(context, addr, regPort, "javaOutliner"));
+        services.add(new JavaCodeCompletion(context, addr, regPort, "javaCodeCompletioner"));
 
         for (MontoService service : services) {
             service.start();

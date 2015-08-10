@@ -1,13 +1,13 @@
 package monto.service.java8;
 
-import monto.service.java8.antlr.Java8Lexer;
 import monto.service.MontoService;
+import monto.service.java8.antlr.Java8Lexer;
 import monto.service.message.*;
 import monto.service.token.Category;
 import monto.service.token.Token;
 import monto.service.token.Tokens;
 import org.antlr.v4.runtime.ANTLRInputStream;
-import org.zeromq.ZMQ;
+import org.zeromq.ZContext;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,11 +15,15 @@ import java.util.stream.Collectors;
 
 public class JavaTokenizer extends MontoService {
 
+    private static final Product TOKENS = new Product("tokens");
+    private static final Language JAVA = new Language("java");
+
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
-    public JavaTokenizer(String address, ZMQ.Context context) {
-        super(address, context);
+    public JavaTokenizer(ZContext context, String address, int registrationPort, String serviceID) {
+        super(context, address, registrationPort, serviceID, TOKENS, JAVA, new String[]{});
     }
+
 
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException {
@@ -32,8 +36,8 @@ public class JavaTokenizer extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                JavaServices.TOKENS,
-                JavaServices.JSON,
+                TOKENS,
+                JAVA,
                 contents);
     }
 

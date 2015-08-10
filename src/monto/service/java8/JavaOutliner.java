@@ -5,7 +5,7 @@ import monto.service.ast.*;
 import monto.service.message.*;
 import monto.service.outline.Outline;
 import monto.service.outline.Outlines;
-import org.zeromq.ZMQ;
+import org.zeromq.ZContext;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -13,14 +13,19 @@ import java.util.List;
 
 public class JavaOutliner extends MontoService {
 
-    public JavaOutliner(String address, ZMQ.Context context) {
-        super(address, context);
+    private static final Product AST = new Product("ast");
+    private static final Product OUTLINE = new Product("outline");
+    private static final Language JAVA = new Language("java");
+
+    public JavaOutliner(ZContext context, String address, int registrationPort, String serviceID) {
+        super(context, address, registrationPort, serviceID, OUTLINE, JAVA, new String[]{"ast/java"});
     }
+
 
     @Override
     public ProductMessage onMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        ProductMessage ast = Messages.getProductMessage(messages, JavaServices.AST, JavaServices.JSON);
+        ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
         NonTerminal root = (NonTerminal) ASTs.decode(ast);
 
         OutlineTrimmer trimmer = new OutlineTrimmer();
@@ -31,8 +36,8 @@ public class JavaOutliner extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                JavaServices.OUTLINE,
-                JavaServices.JSON,
+                OUTLINE,
+                JAVA,
                 content,
                 new ProductDependency(ast));
 

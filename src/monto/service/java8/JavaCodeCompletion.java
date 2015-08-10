@@ -6,7 +6,7 @@ import monto.service.completion.Completion;
 import monto.service.completion.Completions;
 import monto.service.message.*;
 import monto.service.region.IRegion;
-import org.zeromq.ZMQ;
+import org.zeromq.ZContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,14 +15,19 @@ import java.util.stream.Stream;
 
 public class JavaCodeCompletion extends MontoService {
 
-    public JavaCodeCompletion(String address, ZMQ.Context context) {
-        super(address, context);
+    private static final Product AST = new Product("ast");
+    private static final Product COMPLETIONS = new Product("completions");
+    private static final Language JAVA = new Language("java");
+
+    public JavaCodeCompletion(ZContext context, String address, int registrationPort, String serviceID) {
+        super(context, address, registrationPort, serviceID, COMPLETIONS, JAVA, new String[]{"ast/java"});
     }
+
 
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException, ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        ProductMessage ast = Messages.getProductMessage(messages, JavaServices.AST, JavaServices.JSON);
+        ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
         if (version.getSelections().size() > 0) {
             AST root = ASTs.decode(ast);
             List<Completion> allcompletions = allCompletions(version.getContent(), root);
@@ -46,8 +51,8 @@ public class JavaCodeCompletion extends MontoService {
                         version.getVersionId(),
                         new LongKey(1),
                         version.getSource(),
-                        JavaServices.COMPLETIONS,
-                        JavaServices.JSON,
+                        COMPLETIONS,
+                        JAVA,
                         content,
                         new ProductDependency(ast));
             }
