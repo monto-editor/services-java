@@ -18,7 +18,7 @@ public class JavaOutliner extends MontoService {
     private static final Language JAVA = new Language("java");
 
     public JavaOutliner(ZContext context, String address, int registrationPort, String serviceID) {
-        super(context, address, registrationPort, serviceID, OUTLINE, JAVA, new String[]{"ast/java"});
+        super(context, address, registrationPort, serviceID, OUTLINE, JAVA, new String[]{"Source","ast/java"});
     }
 
 

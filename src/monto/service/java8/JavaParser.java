@@ -33,7 +33,7 @@ public class JavaParser extends MontoService {
     Java8Parser parser = new Java8Parser(tokens);
 
     public JavaParser(ZContext context, String address, int registrationPort, String serviceID) {
-        super(context, address, registrationPort, serviceID, AST, JAVA, new String[]{});
+        super(context, address, registrationPort, serviceID, AST, JAVA, new String[]{"Source"});
     }
 
 
