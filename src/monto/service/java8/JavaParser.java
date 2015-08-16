@@ -32,8 +32,8 @@ public class JavaParser extends MontoService {
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     Java8Parser parser = new Java8Parser(tokens);
 
-    public JavaParser(ZContext context, String address, int registrationPort, String serviceID) {
-        super(context, address, registrationPort, serviceID, AST, JAVA, new String[]{"Source"});
+    public JavaParser(ZContext context, String address, String registrationAddress, String serviceID) {
+        super(context, address, registrationAddress, serviceID, AST, JAVA, new String[]{"Source"});
     }
 
 
