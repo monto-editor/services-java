@@ -21,7 +21,7 @@ public class JavaTokenizer extends MontoService {
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
     public JavaTokenizer(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, TOKENS, JAVA, new String[]{"Source"});
+        super(context, address, registrationAddress, serviceID, "ANTLR Tokenizer for Java", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
     }
 
 

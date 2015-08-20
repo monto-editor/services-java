@@ -20,7 +20,7 @@ public class JavaCodeCompletion extends MontoService {
     private static final Language JAVA = new Language("java");
 
     public JavaCodeCompletion(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, COMPLETIONS, JAVA, new String[]{"Source","ast/java"});
+        super(context, address, registrationAddress, serviceID, "Code Completione service for Java", "A code completione service for Java",  COMPLETIONS, JAVA, new String[]{"Source","ast/java"});
     }
 
 
