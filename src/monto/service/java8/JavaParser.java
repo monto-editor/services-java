@@ -40,6 +40,9 @@ public class JavaParser extends MontoService {
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
+        if (!version.getLanguage().equals(JAVA)) {
+            throw new IllegalArgumentException("wrong language in version message");
+        }
         lexer.setInputStream(new ANTLRInputStream(version.getContent().getReader()));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         parser.setTokenStream(tokens);

@@ -27,7 +27,13 @@ public class JavaCodeCompletion extends MontoService {
     @Override
     public ProductMessage onMessage(List<Message> messages) throws IOException, ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
+        if (!version.getLanguage().equals(JAVA)) {
+            throw new IllegalArgumentException("wrong language in version message");
+        }
         ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
+        if (!ast.getLanguage().equals(JAVA)) {
+            throw new IllegalArgumentException("wrong language in ast product message");
+        }
         if (version.getSelections().size() > 0) {
             AST root = ASTs.decode(ast);
             List<Completion> allcompletions = allCompletions(version.getContent(), root);

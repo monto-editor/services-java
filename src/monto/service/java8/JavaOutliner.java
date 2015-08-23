@@ -25,7 +25,13 @@ public class JavaOutliner extends MontoService {
     @Override
     public ProductMessage onMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
+        if (!version.getLanguage().equals(JAVA)) {
+            throw new IllegalArgumentException("wrong language in version message");
+        }
         ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
+        if (!ast.getLanguage().equals(JAVA)) {
+            throw new IllegalArgumentException("wrong language in ast product message");
+        }
         NonTerminal root = (NonTerminal) ASTs.decode(ast);
 
         OutlineTrimmer trimmer = new OutlineTrimmer();
