@@ -23,7 +23,7 @@ public class JavaOutliner extends MontoService {
 
 
     @Override
-    public ProductMessage onMessage(List<Message> messages) throws ParseException {
+    public ProductMessage onVersionMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
@@ -46,6 +46,11 @@ public class JavaOutliner extends MontoService {
                 JAVA,
                 content,
                 new ProductDependency(ast));
+
+    }
+
+    @Override
+    public void onConfigurationMessage(List<Message> list) throws Exception {
 
     }
 

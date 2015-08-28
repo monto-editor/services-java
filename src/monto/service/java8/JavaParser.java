@@ -38,7 +38,7 @@ public class JavaParser extends MontoService {
 
 
     @Override
-    public ProductMessage onMessage(List<Message> messages) throws IOException {
+    public ProductMessage onVersionMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
@@ -61,6 +61,11 @@ public class JavaParser extends MontoService {
                 AST,
                 JAVA,
                 content);
+    }
+
+    @Override
+    public void onConfigurationMessage(List<Message> list) throws Exception {
+
     }
 
     private static class Converter implements ParseTreeListener {

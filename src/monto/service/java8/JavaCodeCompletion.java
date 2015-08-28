@@ -25,7 +25,7 @@ public class JavaCodeCompletion extends MontoService {
 
 
     @Override
-    public ProductMessage onMessage(List<Message> messages) throws IOException, ParseException {
+    public ProductMessage onVersionMessage(List<Message> messages) throws IOException, ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
@@ -65,6 +65,11 @@ public class JavaCodeCompletion extends MontoService {
             throw new IllegalArgumentException(String.format("Last token in selection path is not a terminal: %s", selectedPath));
         }
         throw new IllegalArgumentException("Code completion needs selection");
+    }
+
+    @Override
+    public void onConfigurationMessage(List<Message> list) throws Exception {
+        
     }
 
     private static List<Completion> allCompletions(Contents contents, AST root) {
