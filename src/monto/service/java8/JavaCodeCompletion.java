@@ -69,7 +69,7 @@ public class JavaCodeCompletion extends MontoService {
 
     @Override
     public void onConfigurationMessage(List<Message> list) throws Exception {
-        
+
     }
 
     private static List<Completion> allCompletions(Contents contents, AST root) {
