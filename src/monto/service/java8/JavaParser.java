@@ -52,15 +52,13 @@ public class JavaParser extends MontoService {
         Converter converter = new Converter();
         walker.walk(converter, root);
 
-        Contents content = ASTs.encode(converter.getRoot());
-
         return new ProductMessage(
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
                 AST,
                 JAVA,
-                content);
+                ASTs.encode(converter.getRoot()));
     }
 
     @Override

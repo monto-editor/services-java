@@ -52,14 +52,13 @@ public class JavaCodeCompletion extends MontoService {
                                         version.getSelections().get(0).getStartOffset(),
                                         comp.getIcon()));
 
-                Contents content = new StringContent(Completions.encode(relevant).toJSONString());
                 return new ProductMessage(
                         version.getVersionId(),
                         new LongKey(1),
                         version.getSource(),
                         COMPLETIONS,
                         JAVA,
-                        content,
+                        Completions.encode(relevant),
                         new ProductDependency(ast));
             }
             throw new IllegalArgumentException(String.format("Last token in selection path is not a terminal: %s", selectedPath));
