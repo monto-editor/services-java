@@ -1,4 +1,4 @@
-// Generated from src/de/tudarmstadt/stg/monto/token/java8/Java8.g4 by ANTLR 4.4
+// Generated from Java8.g4 by ANTLR 4.4
 package monto.service.java8.antlr;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;

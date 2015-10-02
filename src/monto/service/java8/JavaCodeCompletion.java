@@ -20,9 +20,8 @@ public class JavaCodeCompletion extends MontoService {
     private static final Language JAVA = new Language("java");
 
     public JavaCodeCompletion(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Code Completione service for Java", "A code completione service for Java",  COMPLETIONS, JAVA, new String[]{"Source","ast/java"});
+        super(context, address, registrationAddress, serviceID, "Code Completione service for Java", "A code completione service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
     }
-
 
     @Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException, ParseException {
@@ -40,8 +39,6 @@ public class JavaCodeCompletion extends MontoService {
             List<AST> selectedPath = selectedPath(root, version.getSelections().get(0));
 
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
-//                Terminal terminalToBeCompleted = (Terminal) last(selectedPath);
-//                String toBeCompleted = version.getContent().extract(terminalToBeCompleted).toString();
                 Terminal terminalToBeCompleted = (Terminal) last(selectedPath);
                 String text = version.getContent().extract(terminalToBeCompleted).toString();
                 if (terminalToBeCompleted.getEndOffset() >= version.getSelections().get(0).getStartOffset() && terminalToBeCompleted.getStartOffset() <= version.getSelections().get(0).getStartOffset()) {
