@@ -20,7 +20,7 @@ public class JavaCodeCompletion extends MontoService {
     private static final Language JAVA = new Language("java");
 
     public JavaCodeCompletion(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Code Completione service for Java", "A code completione service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
+        super(context, address, registrationAddress, serviceID, "Code Completion", "A code completion service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
     }
 
     @Override
@@ -40,7 +40,7 @@ public class JavaCodeCompletion extends MontoService {
 
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
                 Terminal terminalToBeCompleted = (Terminal) last(selectedPath);
-                String text = version.getContent().extract(terminalToBeCompleted).toString();
+                String text = extract(version.getContent(),terminalToBeCompleted);
                 if (terminalToBeCompleted.getEndOffset() >= version.getSelections().get(0).getStartOffset() && terminalToBeCompleted.getStartOffset() <= version.getSelections().get(0).getStartOffset()) {
                     int vStart = version.getSelections().get(0).getStartOffset();
                     int tStart = terminalToBeCompleted.getStartOffset();
@@ -76,7 +76,7 @@ public class JavaCodeCompletion extends MontoService {
 
     }
 
-    private static List<Completion> allCompletions(Contents contents, AST root) {
+    private static List<Completion> allCompletions(String contents, AST root) {
         AllCompletions completionVisitor = new AllCompletions(contents);
         root.accept(completionVisitor);
         return completionVisitor.getCompletions();
@@ -85,10 +85,10 @@ public class JavaCodeCompletion extends MontoService {
     private static class AllCompletions implements ASTVisitor {
 
         private List<Completion> completions = new ArrayList<>();
-        private Contents content;
+        private String content;
         private boolean fieldDeclaration;
 
-        public AllCompletions(Contents content) {
+        public AllCompletions(String content) {
             this.content = content;
         }
 
@@ -100,7 +100,7 @@ public class JavaCodeCompletion extends MontoService {
                     AST packageIdentifier = node.getChildren().get(1);
                     completions.add(new Completion(
                             "package",
-                            content.extract(packageIdentifier).toString(),
+                            extract(content,packageIdentifier),
                             IconType.PACKAGE));
                     break;
 
@@ -145,7 +145,7 @@ public class JavaCodeCompletion extends MontoService {
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
                     .reduce((previous, current) -> current).get();
-            completions.add(new Completion(name, content.extract(structureIdent).toString(), icon));
+            completions.add(new Completion(name, extract(content,structureIdent), icon));
             node.getChildren().forEach(child -> child.accept(this));
         }
 
@@ -155,7 +155,7 @@ public class JavaCodeCompletion extends MontoService {
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
                     .findFirst().get();
-            completions.add(new Completion(name, content.extract(ident).toString(), icon));
+            completions.add(new Completion(name, extract(content,ident), icon));
         }
 
 
@@ -206,6 +206,10 @@ public class JavaCodeCompletion extends MontoService {
                 return false;
             }
         }
+    }
+
+    private static String extract(String str, AST indent) {
+	return str.subSequence(indent.getStartOffset(), indent.getStartOffset()+indent.getLength()).toString();
     }
 
     private static <A> A last(List<A> list) {

@@ -33,7 +33,7 @@ public class JavaParser extends MontoService {
     Java8Parser parser = new Java8Parser(tokens);
 
     public JavaParser(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "ANTLR Java Parser", "A parser that produces an AST for Java using ANTLR", AST, JAVA, new String[]{"Source"});
+        super(context, address, registrationAddress, serviceID, "Parser", "A parser that produces an AST for Java using ANTLR", AST, JAVA, new String[]{"Source"});
     }
 
 
@@ -43,7 +43,7 @@ public class JavaParser extends MontoService {
         if (!version.getLanguage().equals(JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
-        lexer.setInputStream(new ANTLRInputStream(version.getContent().getReader()));
+        lexer.setInputStream(new ANTLRInputStream(version.getContent()));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         parser.setTokenStream(tokens);
         ParserRuleContext root = parser.compilationUnit();

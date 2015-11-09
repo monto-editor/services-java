@@ -21,7 +21,7 @@ public class JavaTokenizer extends MontoService {
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
     public JavaTokenizer(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "ANTLR Tokenizer for Java", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
+        super(context, address, registrationAddress, serviceID, "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
     }
 
 
@@ -31,7 +31,7 @@ public class JavaTokenizer extends MontoService {
         if (!version.getLanguage().equals(JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
-        lexer.setInputStream(new ANTLRInputStream(version.getContent().getReader()));
+        lexer.setInputStream(new ANTLRInputStream(version.getContent()));
         List<Token> tokens = lexer.getAllTokens().stream().map(token -> convertToken(token)).collect(Collectors.toList());
 
         return new ProductMessage(
