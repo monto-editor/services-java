@@ -1,13 +1,11 @@
 package monto.service.java8;
 
-import monto.service.MontoService;
-import monto.service.ast.AST;
-import monto.service.ast.ASTs;
-import monto.service.ast.NonTerminal;
-import monto.service.ast.Terminal;
-import monto.service.java8.antlr.Java8Lexer;
-import monto.service.java8.antlr.Java8Parser;
-import monto.service.message.*;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -15,13 +13,22 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.zeromq.ZContext;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.ast.AST;
+import monto.service.ast.ASTs;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
+import monto.service.java8.antlr.Java8Lexer;
+import monto.service.java8.antlr.Java8Parser;
+import monto.service.message.Language;
+import monto.service.message.LongKey;
+import monto.service.message.Message;
+import monto.service.message.Messages;
+import monto.service.message.Product;
+import monto.service.message.ProductMessage;
+import monto.service.message.VersionMessage;
 
 public class JavaParser extends MontoService {
 
@@ -32,12 +39,11 @@ public class JavaParser extends MontoService {
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     Java8Parser parser = new Java8Parser(tokens);
 
-    public JavaParser(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Parser", "A parser that produces an AST for Java using ANTLR", AST, JAVA, new String[]{"Source"});
+    public JavaParser(ZMQConfiguration zmqConfig) {
+        super(zmqConfig, "javaParser", "Parser", "A parser that produces an AST for Java using ANTLR", AST, JAVA, new String[]{"Source"});
     }
 
-
-    @Override
+	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
@@ -59,11 +65,6 @@ public class JavaParser extends MontoService {
                 AST,
                 JAVA,
                 ASTs.encode(converter.getRoot()));
-    }
-
-    @Override
-    public void onConfigurationMessage(List<Message> list) throws Exception {
-
     }
 
     private static class Converter implements ParseTreeListener {

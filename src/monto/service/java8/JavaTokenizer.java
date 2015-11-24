@@ -1,17 +1,24 @@
 package monto.service.java8;
 
-import monto.service.MontoService;
-import monto.service.java8.antlr.Java8Lexer;
-import monto.service.message.*;
-import monto.service.token.Category;
-import monto.service.token.Token;
-import monto.service.token.Tokens;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.zeromq.ZContext;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.antlr.v4.runtime.ANTLRInputStream;
+
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.java8.antlr.Java8Lexer;
+import monto.service.message.Language;
+import monto.service.message.LongKey;
+import monto.service.message.Message;
+import monto.service.message.Messages;
+import monto.service.message.Product;
+import monto.service.message.ProductMessage;
+import monto.service.message.VersionMessage;
+import monto.service.token.Category;
+import monto.service.token.Token;
+import monto.service.token.Tokens;
 
 public class JavaTokenizer extends MontoService {
 
@@ -20,12 +27,11 @@ public class JavaTokenizer extends MontoService {
 
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
-    public JavaTokenizer(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
-    }
+    public JavaTokenizer(ZMQConfiguration zmqConfig) {
+    	super(zmqConfig, "javaTokenizer", "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
+	}
 
-
-    @Override
+	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
@@ -41,11 +47,6 @@ public class JavaTokenizer extends MontoService {
                 TOKENS,
                 JAVA,
                 Tokens.encode(tokens));
-    }
-
-    @Override
-    public void onConfigurationMessage(List<Message> list) throws Exception {
-
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {

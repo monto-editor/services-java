@@ -1,17 +1,31 @@
 package monto.service.java8;
 
-import monto.service.MontoService;
-import monto.service.ast.*;
-import monto.service.completion.Completion;
-import monto.service.completion.Completions;
-import monto.service.message.*;
-import monto.service.region.IRegion;
-import org.zeromq.ZContext;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.ast.AST;
+import monto.service.ast.ASTVisitor;
+import monto.service.ast.ASTs;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
+import monto.service.completion.Completion;
+import monto.service.completion.Completions;
+import monto.service.message.IconType;
+import monto.service.message.Language;
+import monto.service.message.LongKey;
+import monto.service.message.Message;
+import monto.service.message.Messages;
+import monto.service.message.ParseException;
+import monto.service.message.Product;
+import monto.service.message.ProductDependency;
+import monto.service.message.ProductMessage;
+import monto.service.message.Selection;
+import monto.service.message.VersionMessage;
+import monto.service.region.IRegion;
 
 public class JavaCodeCompletion extends MontoService {
 
@@ -19,8 +33,8 @@ public class JavaCodeCompletion extends MontoService {
     private static final Product COMPLETIONS = new Product("completions");
     private static final Language JAVA = new Language("java");
 
-    public JavaCodeCompletion(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Code Completion", "A code completion service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
+    public JavaCodeCompletion(ZMQConfiguration zmqConfig) {
+        super(zmqConfig, "javaCodeCompletioner", "Code Completion", "A code completion service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
     }
 
     @Override
@@ -69,11 +83,6 @@ public class JavaCodeCompletion extends MontoService {
             throw new IllegalArgumentException(String.format("Last token in selection path is not a terminal: %s", selectedPath));
         }
         throw new IllegalArgumentException("Code completion needs selection");
-    }
-
-    @Override
-    public void onConfigurationMessage(List<Message> list) throws Exception {
-
     }
 
     private static List<Completion> allCompletions(String contents, AST root) {

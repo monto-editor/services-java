@@ -1,15 +1,28 @@
 package monto.service.java8;
 
-import monto.service.MontoService;
-import monto.service.ast.*;
-import monto.service.message.*;
-import monto.service.outline.Outline;
-import monto.service.outline.Outlines;
-import org.zeromq.ZContext;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.ast.AST;
+import monto.service.ast.ASTVisitor;
+import monto.service.ast.ASTs;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
+import monto.service.message.IconType;
+import monto.service.message.Language;
+import monto.service.message.LongKey;
+import monto.service.message.Message;
+import monto.service.message.Messages;
+import monto.service.message.ParseException;
+import monto.service.message.Product;
+import monto.service.message.ProductDependency;
+import monto.service.message.ProductMessage;
+import monto.service.message.VersionMessage;
+import monto.service.outline.Outline;
+import monto.service.outline.Outlines;
 
 public class JavaOutliner extends MontoService {
 
@@ -17,12 +30,12 @@ public class JavaOutliner extends MontoService {
     private static final Product OUTLINE = new Product("outline");
     private static final Language JAVA = new Language("java");
 
-    public JavaOutliner(ZContext context, String address, String registrationAddress, String serviceID) {
-        super(context, address, registrationAddress, serviceID, "Outline", "An outline service for Java", OUTLINE, JAVA, new String[]{"Source", "ast/java"});
+    public JavaOutliner(ZMQConfiguration zmqConfig) {
+    	super(zmqConfig, "javaOutliner", "Outline", "An outline service for Java", OUTLINE, JAVA, new String[]{"Source", "ast/java"});
     }
 
 
-    @Override
+	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
         if (!version.getLanguage().equals(JAVA)) {
@@ -45,12 +58,6 @@ public class JavaOutliner extends MontoService {
                 JAVA,
                 Outlines.encode(trimmer.getConverted()),
                 new ProductDependency(ast));
-
-    }
-
-    @Override
-    public void onConfigurationMessage(List<Message> list) throws Exception {
-
     }
 
     /**

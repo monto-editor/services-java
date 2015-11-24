@@ -1,6 +1,8 @@
 package monto.service.java8;
 
 import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+
 import org.apache.commons.cli.*;
 import org.zeromq.ZContext;
 
@@ -10,8 +12,6 @@ import java.util.List;
 public class JavaServices {
 
     public static void main(String[] args) throws ParseException {
-        String address = "tcp://*";
-        String regAddress = "tcp://*:5004";
         ZContext context = new ZContext(1);
         List<MontoService> services = new ArrayList<>();
 
@@ -33,30 +33,29 @@ public class JavaServices {
                 .addOption("o", false, "enable java outliner")
                 .addOption("c", false, "enable java code completioner")
                 .addOption("address", true, "address of services")
-                .addOption("registration", true, "address of broker registration");
+                .addOption("registration", true, "address of broker registration")
+                .addOption("configuration", true, "address of configuration messages");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption("address")) {
-            address = cmd.getOptionValue("address");
-        }
-
-        if (cmd.hasOption("registration")) {
-            regAddress = cmd.getOptionValue("registration");
-        }
+          
+        ZMQConfiguration zmqConfig = new ZMQConfiguration(
+        		context,
+        		cmd.getOptionValue("address"),
+        		cmd.getOptionValue("registration"),
+        		cmd.getOptionValue("configuration"));
 
         if (cmd.hasOption("t")) {
-            services.add(new JavaTokenizer(context, address, regAddress, "javaTokenizer"));
+            services.add(new JavaTokenizer(zmqConfig));
         }
         if (cmd.hasOption("p")) {
-            services.add(new JavaParser(context, address, regAddress, "javaParser"));
+            services.add(new JavaParser(zmqConfig));
         }
         if (cmd.hasOption("o")) {
-            services.add(new JavaOutliner(context, address, regAddress, "javaOutliner"));
+            services.add(new JavaOutliner(zmqConfig));
         }
         if (cmd.hasOption("c")) {
-            services.add(new JavaCodeCompletion(context, address, regAddress, "javaCodeCompletioner"));
+            services.add(new JavaCodeCompletion(zmqConfig));
         }
 
         for (MontoService service : services) {
