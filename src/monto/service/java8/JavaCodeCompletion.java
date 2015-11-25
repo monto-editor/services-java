@@ -15,36 +15,32 @@ import monto.service.ast.Terminal;
 import monto.service.completion.Completion;
 import monto.service.completion.Completions;
 import monto.service.message.IconType;
-import monto.service.message.Language;
+import monto.service.message.Languages;
 import monto.service.message.LongKey;
 import monto.service.message.Message;
 import monto.service.message.Messages;
 import monto.service.message.ParseException;
-import monto.service.message.Product;
 import monto.service.message.ProductDependency;
 import monto.service.message.ProductMessage;
+import monto.service.message.Products;
 import monto.service.message.Selection;
 import monto.service.message.VersionMessage;
 import monto.service.region.IRegion;
 
 public class JavaCodeCompletion extends MontoService {
 
-    private static final Product AST = new Product("ast");
-    private static final Product COMPLETIONS = new Product("completions");
-    private static final Language JAVA = new Language("java");
-
     public JavaCodeCompletion(ZMQConfiguration zmqConfig) {
-        super(zmqConfig, "javaCodeCompletioner", "Code Completion", "A code completion service for Java", COMPLETIONS, JAVA, new String[]{"Source", "ast/java"});
+        super(zmqConfig, "javaCodeCompletioner", "Code Completion", "A code completion service for Java", Products.COMPLETIONS, Languages.JAVA, new String[]{"Source", "ast/java"});
     }
 
     @Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException, ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        if (!version.getLanguage().equals(JAVA)) {
+        if (!version.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
-        ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
-        if (!ast.getLanguage().equals(JAVA)) {
+        ProductMessage ast = Messages.getProductMessage(messages, Products.AST, Languages.JAVA);
+        if (!ast.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in ast product message");
         }
         if (version.getSelections().size() > 0) {
@@ -75,8 +71,8 @@ public class JavaCodeCompletion extends MontoService {
                         version.getVersionId(),
                         new LongKey(1),
                         version.getSource(),
-                        COMPLETIONS,
-                        JAVA,
+                        Products.COMPLETIONS,
+                        Languages.JAVA,
                         Completions.encode(relevant),
                         new ProductDependency(ast));
             }

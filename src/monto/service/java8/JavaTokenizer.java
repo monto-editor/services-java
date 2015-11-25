@@ -9,12 +9,12 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.java8.antlr.Java8Lexer;
-import monto.service.message.Language;
+import monto.service.message.Languages;
 import monto.service.message.LongKey;
 import monto.service.message.Message;
 import monto.service.message.Messages;
-import monto.service.message.Product;
 import monto.service.message.ProductMessage;
+import monto.service.message.Products;
 import monto.service.message.VersionMessage;
 import monto.service.token.Category;
 import monto.service.token.Token;
@@ -22,19 +22,16 @@ import monto.service.token.Tokens;
 
 public class JavaTokenizer extends MontoService {
 
-    private static final Product TOKENS = new Product("tokens");
-    private static final Language JAVA = new Language("java");
-
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
     public JavaTokenizer(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig, "javaTokenizer", "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", TOKENS, JAVA, new String[]{"Source"});
+    	super(zmqConfig, "javaTokenizer", "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", Products.TOKENS, Languages.JAVA, new String[]{"Source"});
 	}
 
 	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        if (!version.getLanguage().equals(JAVA)) {
+        if (!version.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
@@ -44,8 +41,8 @@ public class JavaTokenizer extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                TOKENS,
-                JAVA,
+                Products.TOKENS,
+                Languages.JAVA,
                 Tokens.encode(tokens));
     }
 

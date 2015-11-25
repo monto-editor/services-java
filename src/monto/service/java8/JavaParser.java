@@ -22,31 +22,28 @@ import monto.service.ast.NonTerminal;
 import monto.service.ast.Terminal;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.java8.antlr.Java8Parser;
-import monto.service.message.Language;
+import monto.service.message.Languages;
 import monto.service.message.LongKey;
 import monto.service.message.Message;
 import monto.service.message.Messages;
-import monto.service.message.Product;
 import monto.service.message.ProductMessage;
+import monto.service.message.Products;
 import monto.service.message.VersionMessage;
 
 public class JavaParser extends MontoService {
-
-    private static final Product AST = new Product("ast");
-    private static final Language JAVA = new Language("java");
 
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
     CommonTokenStream tokens = new CommonTokenStream(lexer);
     Java8Parser parser = new Java8Parser(tokens);
 
     public JavaParser(ZMQConfiguration zmqConfig) {
-        super(zmqConfig, "javaParser", "Parser", "A parser that produces an AST for Java using ANTLR", AST, JAVA, new String[]{"Source"});
+        super(zmqConfig, "javaParser", "Parser", "A parser that produces an AST for Java using ANTLR", Products.AST, Languages.JAVA, new String[]{"Source"});
     }
 
 	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws IOException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        if (!version.getLanguage().equals(JAVA)) {
+        if (!version.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
@@ -62,8 +59,8 @@ public class JavaParser extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                AST,
-                JAVA,
+                Products.AST,
+                Languages.JAVA,
                 ASTs.encode(converter.getRoot()));
     }
 

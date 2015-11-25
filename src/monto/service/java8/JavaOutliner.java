@@ -12,37 +12,33 @@ import monto.service.ast.ASTs;
 import monto.service.ast.NonTerminal;
 import monto.service.ast.Terminal;
 import monto.service.message.IconType;
-import monto.service.message.Language;
+import monto.service.message.Languages;
 import monto.service.message.LongKey;
 import monto.service.message.Message;
 import monto.service.message.Messages;
 import monto.service.message.ParseException;
-import monto.service.message.Product;
 import monto.service.message.ProductDependency;
 import monto.service.message.ProductMessage;
+import monto.service.message.Products;
 import monto.service.message.VersionMessage;
 import monto.service.outline.Outline;
 import monto.service.outline.Outlines;
 
 public class JavaOutliner extends MontoService {
 
-    private static final Product AST = new Product("ast");
-    private static final Product OUTLINE = new Product("outline");
-    private static final Language JAVA = new Language("java");
-
     public JavaOutliner(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig, "javaOutliner", "Outline", "An outline service for Java", OUTLINE, JAVA, new String[]{"Source", "ast/java"});
+    	super(zmqConfig, "javaOutliner", "Outline", "An outline service for Java", Products.OUTLINE, Languages.JAVA, new String[]{"Source", "ast/java"});
     }
 
 
 	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws ParseException {
         VersionMessage version = Messages.getVersionMessage(messages);
-        if (!version.getLanguage().equals(JAVA)) {
+        if (!version.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in version message");
         }
-        ProductMessage ast = Messages.getProductMessage(messages, AST, JAVA);
-        if (!ast.getLanguage().equals(JAVA)) {
+        ProductMessage ast = Messages.getProductMessage(messages, Products.AST, Languages.JAVA);
+        if (!ast.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in ast product message");
         }
         NonTerminal root = (NonTerminal) ASTs.decode(ast);
@@ -54,8 +50,8 @@ public class JavaOutliner extends MontoService {
                 version.getVersionId(),
                 new LongKey(1),
                 version.getSource(),
-                OUTLINE,
-                JAVA,
+                Products.OUTLINE,
+                Languages.JAVA,
                 Outlines.encode(trimmer.getConverted()),
                 new ProductDependency(ast));
     }
