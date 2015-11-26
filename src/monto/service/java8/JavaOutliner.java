@@ -13,13 +13,13 @@ import monto.service.ast.NonTerminal;
 import monto.service.ast.Terminal;
 import monto.service.message.IconType;
 import monto.service.message.Languages;
-import monto.service.message.LongKey;
 import monto.service.message.Message;
 import monto.service.message.Messages;
 import monto.service.message.ParseException;
 import monto.service.message.ProductDependency;
 import monto.service.message.ProductMessage;
 import monto.service.message.Products;
+import monto.service.message.ServiceID;
 import monto.service.message.VersionMessage;
 import monto.service.outline.Outline;
 import monto.service.outline.Outlines;
@@ -27,7 +27,7 @@ import monto.service.outline.Outlines;
 public class JavaOutliner extends MontoService {
 
     public JavaOutliner(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig, "javaOutliner", "Outline", "An outline service for Java", Products.OUTLINE, Languages.JAVA, new String[]{"Source", "ast/java"});
+    	super(zmqConfig, new ServiceID("javaOutliner"), "Outline", "An outline service for Java", Products.OUTLINE, Languages.JAVA, new String[]{"Source", "ast/java"});
     }
 
 
@@ -46,12 +46,9 @@ public class JavaOutliner extends MontoService {
         OutlineTrimmer trimmer = new OutlineTrimmer();
         root.accept(trimmer);
 
-        return new ProductMessage(
+        return productMessage(
                 version.getVersionId(),
-                new LongKey(1),
                 version.getSource(),
-                Products.OUTLINE,
-                Languages.JAVA,
                 Outlines.encode(trimmer.getConverted()),
                 new ProductDependency(ast));
     }
