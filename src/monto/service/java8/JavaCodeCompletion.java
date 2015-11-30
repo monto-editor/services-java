@@ -23,14 +23,24 @@ import monto.service.message.ProductDependency;
 import monto.service.message.ProductMessage;
 import monto.service.message.Products;
 import monto.service.message.Selection;
-import monto.service.message.ServiceID;
 import monto.service.message.VersionMessage;
 import monto.service.region.IRegion;
+import monto.service.registration.ServiceDependency;
+import monto.service.registration.SourceDependency;
 
 public class JavaCodeCompletion extends MontoService {
 
     public JavaCodeCompletion(ZMQConfiguration zmqConfig) {
-        super(zmqConfig, new ServiceID("javaCodeCompletioner"), "Code Completion", "A code completion service for Java", Products.COMPLETIONS, Languages.JAVA, new String[]{"Source", "ast/java"});
+        super(zmqConfig,
+        		JavaServices.JAVA_CODE_COMPLETION,
+        		"Code Completion",
+        		"A code completion service for Java",
+        		Products.COMPLETIONS,
+        		Languages.JAVA,
+        		dependencies(
+        				new SourceDependency(Languages.JAVA),
+        				new ServiceDependency(JavaServices.JAVA_CODE_COMPLETION)
+        		));
     }
 
     @Override

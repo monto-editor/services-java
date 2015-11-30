@@ -27,8 +27,8 @@ import monto.service.message.Message;
 import monto.service.message.Messages;
 import monto.service.message.ProductMessage;
 import monto.service.message.Products;
-import monto.service.message.ServiceID;
 import monto.service.message.VersionMessage;
+import monto.service.registration.SourceDependency;
 
 public class JavaParser extends MontoService {
 
@@ -37,7 +37,15 @@ public class JavaParser extends MontoService {
     Java8Parser parser = new Java8Parser(tokens);
 
     public JavaParser(ZMQConfiguration zmqConfig) {
-        super(zmqConfig, new ServiceID("javaParser"), "Parser", "A parser that produces an AST for Java using ANTLR", Products.AST, Languages.JAVA, new String[]{"Source"});
+        super(zmqConfig,
+        		JavaServices.JAVA_PARSER,
+        		"Parser",
+        		"A parser that produces an AST for Java using ANTLR",
+        		Products.AST,
+        		Languages.JAVA,
+        		dependencies(
+        				new SourceDependency(Languages.JAVA)
+        		));
     }
 
 	@Override

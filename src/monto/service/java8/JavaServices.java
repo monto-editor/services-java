@@ -2,6 +2,7 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
+import monto.service.message.ServiceID;
 
 import org.apache.commons.cli.*;
 import org.zeromq.ZContext;
@@ -11,7 +12,12 @@ import java.util.List;
 
 public class JavaServices {
 
-    public static void main(String[] args) throws ParseException {
+	public static final ServiceID JAVA_TOKENIZER = new ServiceID("javaTokenizer");
+	public static final ServiceID JAVA_PARSER = new ServiceID("javaParser");
+    public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
+	public static final ServiceID JAVA_CODE_COMPLETION = new ServiceID("javaCodeCompletion");
+
+	public static void main(String[] args) throws ParseException {
         ZContext context = new ZContext(1);
         List<MontoService> services = new ArrayList<>();
 

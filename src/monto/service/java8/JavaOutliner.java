@@ -19,15 +19,25 @@ import monto.service.message.ParseException;
 import monto.service.message.ProductDependency;
 import monto.service.message.ProductMessage;
 import monto.service.message.Products;
-import monto.service.message.ServiceID;
 import monto.service.message.VersionMessage;
 import monto.service.outline.Outline;
 import monto.service.outline.Outlines;
+import monto.service.registration.ServiceDependency;
+import monto.service.registration.SourceDependency;
 
 public class JavaOutliner extends MontoService {
 
     public JavaOutliner(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig, new ServiceID("javaOutliner"), "Outline", "An outline service for Java", Products.OUTLINE, Languages.JAVA, new String[]{"Source", "ast/java"});
+    	super(zmqConfig,
+    			JavaServices.JAVA_OUTLINER,
+    			"Outline",
+    			"An outline service for Java",
+    			Products.OUTLINE,
+    			Languages.JAVA,
+    			dependencies(
+    					new SourceDependency(Languages.JAVA),
+    					new ServiceDependency(JavaServices.JAVA_PARSER)
+    			));
     }
 
 

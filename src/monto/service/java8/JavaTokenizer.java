@@ -14,8 +14,8 @@ import monto.service.message.Message;
 import monto.service.message.Messages;
 import monto.service.message.ProductMessage;
 import monto.service.message.Products;
-import monto.service.message.ServiceID;
 import monto.service.message.VersionMessage;
+import monto.service.registration.SourceDependency;
 import monto.service.token.Category;
 import monto.service.token.Token;
 import monto.service.token.Tokens;
@@ -25,7 +25,15 @@ public class JavaTokenizer extends MontoService {
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
 
     public JavaTokenizer(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig, new ServiceID("javaTokenizer"), "Tokenizer", "A tokenizer for Java that uses ANTLR for tokenizing", Products.TOKENS, Languages.JAVA, new String[]{"Source"});
+    	super(zmqConfig,
+    			JavaServices.JAVA_TOKENIZER,
+    			"Tokenizer",
+    			"A tokenizer for Java that uses ANTLR for tokenizing",
+    			Products.TOKENS,
+    			Languages.JAVA,
+    			dependencies(
+    					new SourceDependency(Languages.JAVA)
+    			));
 	}
 
 	@Override
