@@ -32,8 +32,9 @@ public class JavaOutliner extends MontoService {
     			JavaServices.JAVA_OUTLINER,
     			"Outline",
     			"An outline service for Java",
-    			Products.OUTLINE,
     			Languages.JAVA,
+    			Products.OUTLINE,
+    			options(),
     			dependencies(
     					new SourceDependency(Languages.JAVA),
     					new ServiceDependency(JavaServices.JAVA_PARSER)
@@ -59,6 +60,7 @@ public class JavaOutliner extends MontoService {
         return productMessage(
                 version.getVersionId(),
                 version.getSource(),
+                Products.OUTLINE,
                 Outlines.encode(trimmer.getConverted()),
                 new ProductDependency(ast));
     }

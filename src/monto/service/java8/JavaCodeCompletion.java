@@ -35,8 +35,9 @@ public class JavaCodeCompletion extends MontoService {
         		JavaServices.JAVA_CODE_COMPLETION,
         		"Code Completion",
         		"A code completion service for Java",
-        		Products.COMPLETIONS,
         		Languages.JAVA,
+        		Products.COMPLETIONS,
+        		options(),
         		dependencies(
         				new SourceDependency(Languages.JAVA),
         				new ServiceDependency(JavaServices.JAVA_CODE_COMPLETION)
@@ -80,6 +81,7 @@ public class JavaCodeCompletion extends MontoService {
                 return productMessage(
                         version.getVersionId(),
                         version.getSource(),
+                        Products.COMPLETIONS,
                         Completions.encode(relevant),
                         new ProductDependency(ast));
             }

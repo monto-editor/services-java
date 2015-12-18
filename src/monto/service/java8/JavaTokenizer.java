@@ -29,8 +29,9 @@ public class JavaTokenizer extends MontoService {
     			JavaServices.JAVA_TOKENIZER,
     			"Tokenizer",
     			"A tokenizer for Java that uses ANTLR for tokenizing",
-    			Products.TOKENS,
     			Languages.JAVA,
+    			Products.TOKENS,
+    			options(),
     			dependencies(
     					new SourceDependency(Languages.JAVA)
     			));
@@ -48,6 +49,7 @@ public class JavaTokenizer extends MontoService {
         return productMessage(
                 version.getVersionId(),
                 version.getSource(),
+                Products.TOKENS,
                 Tokens.encode(tokens));
     }
 

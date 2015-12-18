@@ -41,8 +41,9 @@ public class JavaParser extends MontoService {
         		JavaServices.JAVA_PARSER,
         		"Parser",
         		"A parser that produces an AST for Java using ANTLR",
-        		Products.AST,
         		Languages.JAVA,
+        		Products.AST,
+        		options(),
         		dependencies(
         				new SourceDependency(Languages.JAVA)
         		));
@@ -66,6 +67,7 @@ public class JavaParser extends MontoService {
         return productMessage(
                 version.getVersionId(),
                 version.getSource(),
+                Products.AST,
                 ASTs.encode(converter.getRoot()));
     }
 
