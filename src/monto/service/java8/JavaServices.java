@@ -2,7 +2,7 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.message.ServiceID;
+import monto.service.types.ServiceID;
 
 import org.apache.commons.cli.*;
 import org.zeromq.ZContext;
