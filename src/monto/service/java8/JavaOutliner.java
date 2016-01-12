@@ -1,5 +1,6 @@
 package monto.service.java8;
 
+import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -18,7 +19,6 @@ import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.ServiceDependency;
 import monto.service.registration.SourceDependency;
-import monto.service.types.IconType;
 import monto.service.types.Languages;
 import monto.service.types.Message;
 import monto.service.types.Messages;
@@ -90,19 +90,11 @@ public class JavaOutliner extends MontoService {
                 case "packageDeclaration":
                     AST packageIdentifier = node.getChildren().get(1);
                     if (packageIdentifier instanceof Terminal)
-                        converted.peek().addChild(new Outline("package", packageIdentifier, IconType.PACKAGE));
+                        converted.peek().addChild(new Outline("package", packageIdentifier, JavaServices.getResource("package.png")));
                     break;
 
                 case "normalClassDeclaration":
-                    structureDeclaration(node, "class", IconType.CLASS);
-                    break;
-
-                case "enumDeclaration":
-                    structureDeclaration(node, "enum", IconType.ENUM);
-                    break;
-
-                case "enumConstant":
-                    leaf(node, "constant", IconType.ENUM_DEFAULT);
+                    structureDeclaration(node, "class", JavaServices.getResource("class.png"));
                     break;
 
                 case "fieldDeclaration":
@@ -112,11 +104,11 @@ public class JavaOutliner extends MontoService {
 
                 case "variableDeclaratorId":
                     if (fieldDeclaration)
-                        leaf(node, "field", IconType.PRIVATE);
+                        leaf(node, "field", JavaServices.getResource("private.png"));
                     break;
 
                 case "methodDeclarator":
-                    leaf(node, "method", IconType.PUBLIC);
+                    leaf(node, "method", JavaServices.getResource("public.png"));
 
                 default:
                     node.getChildren().forEach(child -> child.accept(this));
@@ -128,7 +120,7 @@ public class JavaOutliner extends MontoService {
 
         }
 
-        private void structureDeclaration(NonTerminal node, String name, String icon) {
+        private void structureDeclaration(NonTerminal node, String name, URL icon) {
             node.getChildren()
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
@@ -143,7 +135,7 @@ public class JavaOutliner extends MontoService {
                     });
         }
 
-        private void leaf(NonTerminal node, String name, String icon) {
+        private void leaf(NonTerminal node, String name, URL icon) {
             node.getChildren()
                     .stream()
                     .filter(ast -> ast instanceof Terminal)

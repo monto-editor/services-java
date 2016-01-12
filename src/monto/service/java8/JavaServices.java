@@ -7,6 +7,7 @@ import monto.service.types.ServiceID;
 import org.apache.commons.cli.*;
 import org.zeromq.ZContext;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,4 +69,8 @@ public class JavaServices {
             service.start();
         }
     }
+
+	public static URL getResource(String name) {
+		return JavaServices.class.getResource("/"+name);
+	}
 }
