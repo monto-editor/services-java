@@ -1,21 +1,21 @@
 package monto.service.java8;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.zeromq.ZContext;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.resources.ResourceServer;
 import monto.service.types.ServiceID;
 
-import org.apache.commons.cli.*;
-import org.zeromq.ZContext;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
 public class JavaServices {
 
-	public static final int resourcePort = 8080;
 	public static final ServiceID JAVA_TOKENIZER = new ServiceID("javaTokenizer");
 	public static final ServiceID JAVA_PARSER = new ServiceID("javaParser");
     public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
@@ -49,7 +49,8 @@ public class JavaServices {
                 .addOption("c", false, "enable java code completioner")
                 .addOption("address", true, "address of services")
                 .addOption("registration", true, "address of broker registration")
-                .addOption("configuration", true, "address of configuration messages");
+                .addOption("configuration", true, "address of configuration messages")
+                .addOption("resources", true, "port for http resource server");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -58,10 +59,10 @@ public class JavaServices {
         		context,
         		cmd.getOptionValue("address"),
         		cmd.getOptionValue("registration"),
-        		cmd.getOptionValue("configuration"));
+        		cmd.getOptionValue("configuration"),
+        		Integer.parseInt(cmd.getOptionValue("resources")));
 
-        System.out.println(JavaServices.class.getResource("/images").getPath());
-        resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), resourcePort);
+        resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), zmqConfig.getResourcePort());
         resourceServer.start();
         
         if (cmd.hasOption("t")) {
@@ -81,12 +82,4 @@ public class JavaServices {
             service.start();
         }
     }
-
-	public static URL getResource(String name) {
-		try {
-			return new URL(String.format("http://localhost:%d/%s",resourcePort,name));
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-	}
 }

@@ -67,7 +67,7 @@ public class JavaOutliner extends MontoService {
     /**
      * Traverses the AST and removes unneeded information.
      */
-    private static class OutlineTrimmer implements ASTVisitor {
+    private class OutlineTrimmer implements ASTVisitor {
 
         private Deque<Outline> converted = new ArrayDeque<>();
         private boolean fieldDeclaration = false;
@@ -89,11 +89,11 @@ public class JavaOutliner extends MontoService {
                 case "packageDeclaration":
                     AST packageIdentifier = node.getChildren().get(1);
                     if (packageIdentifier instanceof Terminal)
-                        converted.peek().addChild(new Outline("package", packageIdentifier, JavaServices.getResource("package.png")));
+                        converted.peek().addChild(new Outline("package", packageIdentifier, getResource("package.png")));
                     break;
 
                 case "normalClassDeclaration":
-                    structureDeclaration(node, "class", JavaServices.getResource("class.png"));
+                    structureDeclaration(node, "class", getResource("class.png"));
                     break;
 
                 case "fieldDeclaration":
@@ -103,11 +103,11 @@ public class JavaOutliner extends MontoService {
 
                 case "variableDeclaratorId":
                     if (fieldDeclaration)
-                        leaf(node, "field", JavaServices.getResource("private.png"));
+                        leaf(node, "field", getResource("private.png"));
                     break;
 
                 case "methodDeclarator":
-                    leaf(node, "method", JavaServices.getResource("public.png"));
+                    leaf(node, "method", getResource("public.png"));
 
                 default:
                     node.getChildren().forEach(child -> child.accept(this));
