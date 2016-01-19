@@ -2,23 +2,27 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
+import monto.service.resources.ResourceServer;
 import monto.service.types.ServiceID;
 
 import org.apache.commons.cli.*;
 import org.zeromq.ZContext;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaServices {
 
+	public static final int resourcePort = 8080;
 	public static final ServiceID JAVA_TOKENIZER = new ServiceID("javaTokenizer");
 	public static final ServiceID JAVA_PARSER = new ServiceID("javaParser");
     public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
 	public static final ServiceID JAVA_CODE_COMPLETION = new ServiceID("javaCodeCompletion");
+	private static ResourceServer resourceServer;
 
-	public static void main(String[] args) throws ParseException {
+	public static void main(String[] args) throws Exception {
         ZContext context = new ZContext(1);
         List<MontoService> services = new ArrayList<>();
 
@@ -26,9 +30,13 @@ public class JavaServices {
             @Override
             public void run() {
                 System.out.println("terminating...");
-                for (MontoService service : services) {
-                    service.stop();
-                }
+                try {
+                	for (MontoService service : services)
+                		service.stop();
+					resourceServer.stop();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
                 context.destroy();
                 System.out.println("everything terminated, good bye");
             }
@@ -52,6 +60,10 @@ public class JavaServices {
         		cmd.getOptionValue("registration"),
         		cmd.getOptionValue("configuration"));
 
+        System.out.println(JavaServices.class.getResource("/images").getPath());
+        resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), resourcePort);
+        resourceServer.start();
+        
         if (cmd.hasOption("t")) {
             services.add(new JavaTokenizer(zmqConfig));
         }
@@ -71,6 +83,10 @@ public class JavaServices {
     }
 
 	public static URL getResource(String name) {
-		return JavaServices.class.getResource("/"+name);
+		try {
+			return new URL(String.format("http://localhost:%d/%s",resourcePort,name));
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

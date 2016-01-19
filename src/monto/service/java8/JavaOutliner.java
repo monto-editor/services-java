@@ -27,7 +27,7 @@ import monto.service.version.VersionMessage;
 
 public class JavaOutliner extends MontoService {
 
-    public JavaOutliner(ZMQConfiguration zmqConfig) {
+	public JavaOutliner(ZMQConfiguration zmqConfig) {
     	super(zmqConfig,
     			JavaServices.JAVA_OUTLINER,
     			"Outline",
@@ -40,7 +40,6 @@ public class JavaOutliner extends MontoService {
     					new ServiceDependency(JavaServices.JAVA_PARSER)
     			));
     }
-
 
 	@Override
     public ProductMessage onVersionMessage(List<Message> messages) throws ParseException {

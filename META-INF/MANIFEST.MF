@@ -5,5 +5,5 @@ Bundle-SymbolicName: services-java
 Bundle-Version: 1.0.0.qualifier
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- servies-base-java;bundle-version="1.0.0"
+ servies-base-java
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
