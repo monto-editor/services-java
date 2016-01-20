@@ -1,6 +1,7 @@
 package monto.service.java8;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -20,7 +21,6 @@ import monto.service.product.Products;
 import monto.service.region.IRegion;
 import monto.service.registration.ServiceDependency;
 import monto.service.registration.SourceDependency;
-import monto.service.types.IconType;
 import monto.service.types.Languages;
 import monto.service.types.Message;
 import monto.service.types.Messages;
@@ -90,13 +90,13 @@ public class JavaCodeCompletion extends MontoService {
         throw new IllegalArgumentException("Code completion needs selection");
     }
 
-    private static List<Completion> allCompletions(String contents, AST root) {
+    private List<Completion> allCompletions(String contents, AST root) {
         AllCompletions completionVisitor = new AllCompletions(contents);
         root.accept(completionVisitor);
         return completionVisitor.getCompletions();
     }
 
-    private static class AllCompletions implements ASTVisitor {
+    private class AllCompletions implements ASTVisitor {
 
         private List<Completion> completions = new ArrayList<>();
         private String content;
@@ -115,19 +115,11 @@ public class JavaCodeCompletion extends MontoService {
                     completions.add(new Completion(
                             "package",
                             extract(content,packageIdentifier),
-                            IconType.PACKAGE));
+                            getResource("package.png")));
                     break;
 
                 case "normalClassDeclaration":
-                    structureDeclaration(node, "class", IconType.CLASS);
-                    break;
-
-                case "enumDeclaration":
-                    structureDeclaration(node, "enum", IconType.ENUM);
-                    break;
-
-                case "enumConstant":
-                    leaf(node, "constant", IconType.ENUM_DEFAULT);
+                    structureDeclaration(node, "class", getResource("class.png"));
                     break;
 
                 case "fieldDeclaration":
@@ -137,11 +129,11 @@ public class JavaCodeCompletion extends MontoService {
 
                 case "variableDeclaratorId":
                     if (fieldDeclaration)
-                        leaf(node, "field", IconType.PRIVATE);
+                        leaf(node, "field", getResource("private.png"));
                     break;
 
                 case "methodDeclarator":
-                    leaf(node, "method", IconType.PUBLIC);
+                    leaf(node, "method", getResource("public.png"));
 
                 default:
                     node.getChildren().forEach(child -> child.accept(this));
@@ -153,7 +145,7 @@ public class JavaCodeCompletion extends MontoService {
 
         }
 
-        private void structureDeclaration(NonTerminal node, String name, String icon) {
+        private void structureDeclaration(NonTerminal node, String name, URL icon) {
             Terminal structureIdent = (Terminal) node
                     .getChildren()
                     .stream()
@@ -163,13 +155,13 @@ public class JavaCodeCompletion extends MontoService {
             node.getChildren().forEach(child -> child.accept(this));
         }
 
-        private void leaf(NonTerminal node, String name, String icon) {
+        private void leaf(NonTerminal node, String name, URL url) {
             AST ident = node
                     .getChildren()
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
                     .findFirst().get();
-            completions.add(new Completion(name, extract(content,ident), icon));
+            completions.add(new Completion(name, extract(content,ident), url));
         }
 
 
