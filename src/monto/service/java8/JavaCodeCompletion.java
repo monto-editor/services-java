@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
@@ -15,7 +15,6 @@ import monto.service.ast.NonTerminal;
 import monto.service.ast.Terminal;
 import monto.service.completion.Completion;
 import monto.service.completion.Completions;
-import monto.service.filedependencies.ProductDependency;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
@@ -40,7 +39,7 @@ public class JavaCodeCompletion extends MontoService {
         		options(),
         		dependencies(
         				new SourceDependency(Languages.JAVA),
-        				new ServiceDependency(JavaServices.JAVA_CODE_COMPLETION)
+        				new ServiceDependency(JavaServices.JAVA_PARSER)
         		));
     }
 
@@ -54,6 +53,7 @@ public class JavaCodeCompletion extends MontoService {
         if (!ast.getLanguage().equals(Languages.JAVA)) {
             throw new IllegalArgumentException("wrong language in ast product message");
         }
+        
         if (version.getSelections().size() > 0) {
             AST root = ASTs.decode(ast);
             List<Completion> allcompletions = allCompletions(version.getContent(), root);
@@ -68,7 +68,7 @@ public class JavaCodeCompletion extends MontoService {
                     text = text.substring(0, vStart - tStart);
                 }
                 String toBeCompleted = text;
-                Stream<Completion> relevant =
+                List<Completion> relevant =
                         allcompletions
                                 .stream()
                                 .filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
@@ -76,14 +76,16 @@ public class JavaCodeCompletion extends MontoService {
                                         comp.getDescription() + ": " + comp.getReplacement(),
                                         comp.getReplacement().substring(toBeCompleted.length()),
                                         version.getSelections().get(0).getStartOffset(),
-                                        comp.getIcon()));
-
+                                        comp.getIcon()))
+                                .collect(Collectors.toList());
+                
+                System.out.printf("Relevant: %s\n", relevant);
+                
                 return productMessage(
                         version.getVersionId(),
                         version.getSource(),
                         Products.COMPLETIONS,
-                        Completions.encode(relevant),
-                        new ProductDependency(ast));
+                        Completions.encode(relevant));
             }
             throw new IllegalArgumentException(String.format("Last token in selection path is not a terminal: %s", selectedPath));
         }
