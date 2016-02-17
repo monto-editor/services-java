@@ -62,6 +62,7 @@ public class JavaOutliner extends MontoService {
                 version.getId(),
                 version.getSource(),
                 Products.OUTLINE,
+                Languages.JAVA,
                 Outlines.encode(trimmer.getConverted()));
     }
 

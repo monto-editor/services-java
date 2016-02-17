@@ -80,6 +80,7 @@ public class JavaCodeCompletion extends MontoService {
                         version.getId(),
                         version.getSource(),
                         Products.COMPLETIONS,
+                        Languages.JAVA,
                         Completions.encode(relevant));
             }
             throw new IllegalArgumentException(String.format("Last token in selection path is not a terminal: %s", selectedPath));

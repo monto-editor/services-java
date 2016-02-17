@@ -47,6 +47,7 @@ public class JavaTokenizer extends MontoService {
                 version.getId(),
                 version.getSource(),
                 Products.TOKENS,
+                Languages.JAVA,
                 Tokens.encode(tokens));
     }
 
