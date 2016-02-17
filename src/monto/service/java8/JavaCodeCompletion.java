@@ -18,14 +18,13 @@ import monto.service.completion.Completions;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
-import monto.service.registration.ServiceDependency;
+import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
+import monto.service.request.Request;
+import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
-import monto.service.types.Message;
-import monto.service.types.Messages;
 import monto.service.types.ParseException;
 import monto.service.types.Selection;
-import monto.service.version.VersionMessage;
 
 public class JavaCodeCompletion extends MontoService {
 
@@ -39,20 +38,16 @@ public class JavaCodeCompletion extends MontoService {
         		options(),
         		dependencies(
         				new SourceDependency(Languages.JAVA),
-        				new ServiceDependency(JavaServices.JAVA_PARSER)
+        				new ProductDependency(JavaServices.JAVA_PARSER, Products.AST, Languages.JAVA)
         		));
     }
 
     @Override
-    public ProductMessage onVersionMessage(List<Message> messages) throws IOException, ParseException {
-        VersionMessage version = Messages.getVersionMessage(messages);
-        if (!version.getLanguage().equals(Languages.JAVA)) {
-            throw new IllegalArgumentException("wrong language in version message");
-        }
-        ProductMessage ast = Messages.getProductMessage(messages, Products.AST, Languages.JAVA);
-        if (!ast.getLanguage().equals(Languages.JAVA)) {
-            throw new IllegalArgumentException("wrong language in ast product message");
-        }
+    public ProductMessage onRequest(Request request) throws IOException, ParseException {
+    	SourceMessage version = request.getSourceMessage()
+    			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+        ProductMessage ast = request.getProductMessage(Products.AST, Languages.JAVA)
+        		.orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
         
         if (version.getSelections().size() > 0) {
             AST root = ASTs.decode(ast);
@@ -82,7 +77,7 @@ public class JavaCodeCompletion extends MontoService {
                 System.out.printf("Relevant: %s\n", relevant);
                 
                 return productMessage(
-                        version.getVersionId(),
+                        version.getId(),
                         version.getSource(),
                         Products.COMPLETIONS,
                         Completions.encode(relevant));
