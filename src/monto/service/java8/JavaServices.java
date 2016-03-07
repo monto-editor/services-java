@@ -47,10 +47,12 @@ public class JavaServices {
                 .addOption("p", false, "enable java parser")
                 .addOption("o", false, "enable java outliner")
                 .addOption("c", false, "enable java code completioner")
+                .addOption("cd", false, "enable java dynamic code completioner")
                 .addOption("address", true, "address of services")
                 .addOption("registration", true, "address of broker registration")
                 .addOption("configuration", true, "address of configuration messages")
-                .addOption("resources", true, "port for http resource server");
+                .addOption("resources", true, "port for http resource server")
+                .addOption("dyndeps", true, "port for dynamic dependencies registrations");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -60,6 +62,7 @@ public class JavaServices {
         		cmd.getOptionValue("address"),
         		cmd.getOptionValue("registration"),
         		cmd.getOptionValue("configuration"),
+                cmd.getOptionValue("dyndeps"),
         		Integer.parseInt(cmd.getOptionValue("resources")));
 
         resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), zmqConfig.getResourcePort());
@@ -75,7 +78,11 @@ public class JavaServices {
             services.add(new JavaOutliner(zmqConfig));
         }
         if (cmd.hasOption("c")) {
-            services.add(new JavaCodeCompletion(zmqConfig));
+            if (cmd.hasOption("cd")) {
+                services.add(new JavaDynamicCodeCompletion(zmqConfig));
+            } else {
+                services.add(new JavaCodeCompletion(zmqConfig));
+            }
         }
 
         for (MontoService service : services) {
