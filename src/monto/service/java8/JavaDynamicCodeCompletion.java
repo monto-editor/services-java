@@ -49,13 +49,13 @@ public class JavaDynamicCodeCompletion extends MontoService {
     @Override
     public ProductMessage onRequest(Request request) throws IOException, ParseException {
         SourceMessage source = request.getSourceMessage(request.getSource())
-                .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+                .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
         if (source.getSelections().size() > 0) {
             AST ast = ASTs.decode(request.getProductMessage(Products.AST, Languages.JAVA)
                     .orElseThrow(() -> new IllegalArgumentException("No AST message in request")));
             ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
-                    .orElseThrow(() -> new IllegalArgumentException("No TOKENS message in request"));
+                    .orElseThrow(() -> new IllegalArgumentException("No Tokens message in request"));
 
             Set<Source> requiredSources = new HashSet<>();
             Set<DynamicDependency> dynDeps = findDynamicDependencies(tokens, source, requiredSources);

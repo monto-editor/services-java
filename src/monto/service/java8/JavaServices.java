@@ -20,6 +20,9 @@ public class JavaServices {
 	public static final ServiceID JAVA_PARSER = new ServiceID("javaParser");
     public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
 	public static final ServiceID JAVA_CODE_COMPLETION = new ServiceID("javaCodeCompletion");
+    public static final ServiceID JAVA_FILE_DEPENDENCIES = new ServiceID("javaFileDependencies");
+    public static final ServiceID JAVA_FILE_GRAPH = new ServiceID("javaFileGraph");
+
 	private static ResourceServer resourceServer;
 
 	public static void main(String[] args) throws Exception {
@@ -48,6 +51,7 @@ public class JavaServices {
                 .addOption("o", false, "enable java outliner")
                 .addOption("c", false, "enable java code completioner")
                 .addOption("cd", false, "enable java dynamic code completioner")
+                .addOption("d", false, "enable java file dependencies")
                 .addOption("address", true, "address of services")
                 .addOption("registration", true, "address of broker registration")
                 .addOption("configuration", true, "address of configuration messages")
@@ -83,6 +87,10 @@ public class JavaServices {
             } else {
                 services.add(new JavaCodeCompletion(zmqConfig));
             }
+        }
+        if (cmd.hasOption("d")) {
+            services.add(new JavaFileDependencies(zmqConfig));
+            services.add(new JavaFileGraph(zmqConfig));
         }
 
         for (MontoService service : services) {
