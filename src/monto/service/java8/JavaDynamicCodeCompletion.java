@@ -28,8 +28,7 @@ import java.util.stream.Collectors;
 
 public class JavaDynamicCodeCompletion extends MontoService {
 
-    private RegisterDynamicDependencies registerDynamicDependencies =
-            new RegisterDynamicDependencies(new Source(""), JavaServices.JAVA_CODE_COMPLETION, new HashSet<>());
+    private Map<Source, RegisterDynamicDependencies> registerDynamicDependencies = new HashMap<>();
 
     public JavaDynamicCodeCompletion(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
@@ -145,9 +144,9 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 JavaServices.JAVA_CODE_COMPLETION,
                 dynDeps
         );
-        if (!regDynDep.equals(registerDynamicDependencies)) {
+        if (!regDynDep.equals(registerDynamicDependencies.get(source.getSource()))) {
             super.registerDynamicDependencies(regDynDep);
-            registerDynamicDependencies = regDynDep;
+            registerDynamicDependencies.put(source.getSource(), regDynDep);
         }
     }
 
