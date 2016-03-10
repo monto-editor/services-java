@@ -55,23 +55,16 @@ public class JavaCodeCompletion extends MontoService {
             List<AST> selectedPath = selectedPath(root, version.getSelections().get(0));
 
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
-                Terminal terminalToBeCompleted = (Terminal) last(selectedPath);
-                String text = extract(version.getContent(),terminalToBeCompleted);
-                if (terminalToBeCompleted.getEndOffset() >= version.getSelections().get(0).getStartOffset() && terminalToBeCompleted.getStartOffset() <= version.getSelections().get(0).getStartOffset()) {
-                    int vStart = version.getSelections().get(0).getStartOffset();
-                    int tStart = terminalToBeCompleted.getStartOffset();
-                    text = text.substring(0, vStart - tStart);
-                }
-                String toBeCompleted = text;
+                String toBeCompleted = extract(version.getContent(),last(selectedPath));
                 List<Completion> relevant =
                         allcompletions
                                 .stream()
                                 .filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
                                 .map(comp -> new Completion(
                                         comp.getDescription() + ": " + comp.getReplacement(),
-                                        comp.getReplacement().substring(toBeCompleted.length()),
+                                        comp.getReplacement(),
                                         version.getSelections().get(0).getStartOffset(),
-                                        comp.getIcon()))
+                                        null))
                                 .collect(Collectors.toList());
                 
                 System.out.printf("Relevant: %s\n", relevant);
