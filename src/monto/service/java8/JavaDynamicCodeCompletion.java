@@ -76,7 +76,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                                     .stream()
                                     .filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
                                     .map(comp -> new Completion(
-                                            comp.getDescription() + ": " + comp.getReplacement(),
+                                            msg.src.getSource() + " - " + comp.getDescription() + ": " + comp.getReplacement(),
                                             comp.getReplacement(),
                                             source.getSelections().get(0).getStartOffset(),
                                             null))
