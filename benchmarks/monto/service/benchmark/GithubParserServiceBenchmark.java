@@ -30,6 +30,7 @@ public class GithubParserServiceBenchmark extends Benchmark {
         		"tcp://*",
         		"tcp://*:5004",
         		"tcp://*:5007",
+        		"tcp://*:5008",
         		8080);
 		parser = new GithubJavaParser(zmqConfig);
 	}

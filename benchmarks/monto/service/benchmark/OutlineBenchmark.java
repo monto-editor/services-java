@@ -32,6 +32,7 @@ public class OutlineBenchmark extends Benchmark {
         		"tcp://*",
         		"tcp://*:5004",
         		"tcp://*:5007",
+        		"tcp://*:5008",
         		8080);
 		parser = new GithubJavaParser(zmqConfig);
 		outliner = new JavaOutliner(zmqConfig);
