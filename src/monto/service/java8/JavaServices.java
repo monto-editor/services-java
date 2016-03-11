@@ -76,7 +76,7 @@ public class JavaServices {
             services.add(new JavaTokenizer(zmqConfig));
         }
         if (cmd.hasOption("p")) {
-            services.add(new JavaParser(zmqConfig));
+            services.add(new GithubJavaParser(zmqConfig));
         }
         if (cmd.hasOption("o")) {
             services.add(new JavaOutliner(zmqConfig));

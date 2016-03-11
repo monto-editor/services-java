@@ -5,24 +5,20 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import org.json.simple.JSONObject;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.ast.AST;
-import monto.service.ast.ASTVisitor;
+import monto.service.ast.ASTNode;
+import monto.service.ast.ASTNodeVisitor;
 import monto.service.ast.ASTs;
-import monto.service.ast.NonTerminal;
-import monto.service.ast.Terminal;
 import monto.service.outline.Outline;
 import monto.service.outline.Outlines;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
-import monto.service.region.Region;
 import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
@@ -53,10 +49,14 @@ public class JavaOutliner extends MontoService {
         ProductMessage ast = request.getProductMessage(Products.AST, Languages.JAVA)
         		.orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
-        NonTerminal root = (NonTerminal) ASTs.decode(ast);
+        ASTNode root = (ASTNode) ASTs.decodeASTNode((JSONObject) ast.getContents());
 
         OutlineTrimmer trimmer = new OutlineTrimmer(version);
-        root.accept(trimmer);
+        try {
+        	root.accept(trimmer);
+        } catch(Exception e) {
+        	throw new RuntimeException(String.format("error while trimming the following AST:\n%s\nLength: %d",root.toString(),version.getContent().length()),e);
+        }
 
         return productMessage(
                 version.getId(),
@@ -69,7 +69,7 @@ public class JavaOutliner extends MontoService {
     /**
      * Traverses the AST and removes unneeded information.
      */
-    private class OutlineTrimmer implements ASTVisitor {
+    private class OutlineTrimmer implements ASTNodeVisitor {
 
         private Deque<Outline> converted = new ArrayDeque<>();
         private String document;
@@ -83,9 +83,9 @@ public class JavaOutliner extends MontoService {
         }
 		
 		@Override
-        public void visit(NonTerminal node) {
+        public void visit(ASTNode node) {
             switch (node.getName()) {
-                case "compilationUnit": {
+                case "CompilationUnit": {
                     converted.push(new Outline("compilation-unit", node, null));
                     node.getChildren().forEach(child -> child.accept(this));
                     // compilation unit doesn't get poped from the stack
@@ -93,128 +93,88 @@ public class JavaOutliner extends MontoService {
                 }
                 break;
 
-                case "packageDeclaration": {
-                	List<AST> children = node.getChildren();
-                    Terminal packageIdentFirst = (Terminal) children.get(1);
-                    Terminal packageIdentLast = (Terminal) children.get(children.size()-2);
-                    IRegion packageIdentifier = new Region(
-                    		packageIdentFirst.getStartOffset(),
-                    		packageIdentLast.getEndOffset() - packageIdentFirst.getStartOffset());
+                case "PackageDeclaration": {
+                	ASTNode packageIdentifier = node.getChild(0);
                     addChild(new Outline(extract(packageIdentifier), packageIdentifier, getResource("package.png")));
                 }
                 break;
 
-                case "normalClassDeclaration": {
-                	List<String> modifiers = new ArrayList<>();
-                	collectTerminals(node.getChild(0))
-                		.forEach(t -> modifiers.add(extract(t)));
-                	Terminal className = findTerminal(node.getChild(2));
-                	URL classIcon = getIcon(modifiers, "class");
-                    Outline klass = new Outline(extract(className), className, classIcon);
-                	addChild(klass);
-                    converted.push(klass);
-                    node.getChild(3).accept(this);
-                    converted.pop();
+                case "ClassDeclaration":
+                case "InterfaceDeclaration": {
+	                List<String> modifiers = new ArrayList<>();
+	            	for(ASTNode modifier: node.getChild(0).getChildren())
+	            		modifiers.add(modifier.getName());
+	            	ASTNode className = node.getChild(1);
+	            	URL classIcon = getIcon(modifiers, "class");
+	                Outline klass = new Outline(extract(className), className, classIcon);
+	            	addChild(klass);
+	                converted.push(klass);
+	                for(int i = 2; i<node.getChildren().size(); i++)
+	                	node.getChild(i).accept(this);
+	                converted.pop();
                 }
                 break;
-                    
-                case "constructorDeclaration": {
+                
+                case "ConstructorDeclaration": {
                 	List<String> modifiers = new ArrayList<>();
+                	for(ASTNode modifier : node.getChild(0).getChildren())
+                		modifiers.add(modifier.getName());
+                	
+                	ASTNode constructorName = node.getChild(1);
+                	
                 	List<FormalParameter> parameters = new ArrayList<>();
-                	Terminal[] constructorName = new Terminal[1];
-                	for(AST n : node.getChildren()) {
-                		n.<Void>match(nonTerminal -> {
-                			String name = nonTerminal.getName();
-                			if(name.equals("constructorModifier"))
-                				modifiers.add(extract(findTerminal(nonTerminal)));
-                			if(name.equals("constructorDeclarator")) {
-                				constructorName[0] = findTerminal(nonTerminal.getChild(0));
-                				formalParameterList(nonTerminal.getChild(2))
-                				.collect(Collectors.toCollection(() -> parameters));
-                			}
-                			return null;
-                		},
-                				terminal -> { return null; });
-                	}
+                	for(ASTNode parameter: node.getChild(2).getChildren())
+                		parameters.add(new FormalParameter(parameter.getChild(1), parameter.getChild(0)));
+                	
                 	URL constructorIcon = getIcon(modifiers, "constructor");
                 	String paramterList = parameters.stream()
                 			.map(p -> extract(p.getType()))
                 			.collect(Collectors.joining(", "));
-                	String cname = String.format("%s(%s)", extract(constructorName[0]), paramterList);
-                	addChild(new Outline(cname,constructorName[0],constructorIcon));
+                	String cname = String.format("%s(%s)", extract(constructorName), paramterList);
+                	addChild(new Outline(cname,constructorName,constructorIcon));
                 }
                 break;
 
-                case "fieldDeclaration": {
+                case "FieldDeclaration": {
                 	List<String> modifiers = new ArrayList<>();
-                	String[] type = new String[1];
-                	List<Terminal> variables = new ArrayList<>();
-                	for(AST n : node.getChildren()) {
-                		n.<Void>match(
-                			nonTerminal -> {
-	                			String name = nonTerminal.getName();
-	                			if(name.equals("fieldModifier"))
-	                				modifiers.add(extract(nonTerminal.getChild(0)));
-	                			if(name.toLowerCase().contains("type"))
-	                				type[0] = extract(findTerminal(nonTerminal));
-	                			if(name.equals("variableDeclaratorList")) {
-	                				for(AST var : nonTerminal.getChildren())
-	                					getVariableId(var).ifPresent(t->variables.add(t));
-	                			}
-	                			return null;
-                			},
-                			terminal -> { return null; });
-                	}
-                	for(Terminal variable : variables) {
+                	for(ASTNode modifier : node.getChild(0).getChildren())
+                		modifiers.add(modifier.getName());
+                	ASTNode type = node.getChild(1);
+                	for(ASTNode variable : node.getChild(2).getChildren()) {
                 		URL fieldIcon = getIcon(modifiers, "field");
-                		String name = String.format("%s : %s", extract(variable), type[0]);
+                		String name = String.format("%s : %s", extract(variable), type);
                 		addChild(new Outline(name, variable, fieldIcon));
                 	}
                 }
                 break;
 
-                case "methodDeclaration": {
+                case "MethodDeclaration": {
                 	List<String> modifiers = new ArrayList<>();
+                	for(ASTNode modifier : node.getChild(0).getChildren())
+                		modifiers.add(modifier.getName());
+                	
+                	ASTNode returnType = node.getChild(1);
+                	
+                	ASTNode methodName = node.getChild(2);
+                	
                 	List<FormalParameter> parameters = new ArrayList<>();
-                	Terminal[] returnType = new Terminal[1];
-                	Terminal[] methodName = new Terminal[1];
-                	for(AST n : node.getChildren()) {
-                		n.<Void>match(nonTerminal -> {
-                			String name = nonTerminal.getName();
-                			if(name.equals("methodModifier"))
-                				modifiers.add(extract(findTerminal(nonTerminal)));
-                			if(name.equals("methodHeader")) {
-                				returnType[0] = findTerminal(nonTerminal.getChild(0));
-                				NonTerminal methodDeclarator = (NonTerminal) nonTerminal.getChild(1);
-                				methodName[0] = findTerminal(methodDeclarator.getChild(0));
-                				formalParameterList(methodDeclarator.getChild(2))
-                					.collect(Collectors.toCollection(() -> parameters));
-                			}
-                			return null;
-                		},
-                		terminal -> { return null; });
+                	for(int i = 3; i < node.getChildren().size() && node.getChild(i).getName().equals("Parameter"); i++) {
+                		ASTNode parameter = node.getChild(i);
+                		parameters.add(new FormalParameter(parameter.getChild(1), parameter.getChild(0)));
                 	}
+                	
                 	URL methodIcon = getIcon(modifiers,"method");
                 	String methodParams = parameters.stream()
                 	  .map(p -> extract(p.getType()))
                 	  .collect(Collectors.joining(", "));
-                	String name = String.format("%s(%s) : %s", extract(methodName[0]), methodParams, extract(returnType[0]));
-                	addChild(new Outline(name, methodName[0], methodIcon));
+                	String name = String.format("%s(%s) : %s", extract(methodName), methodParams, extract(returnType));
+                	addChild(new Outline(name, methodName, methodIcon));
                 }
                 
                 default:
                     node.getChildren().forEach(child -> child.accept(this));
             }
         }
-
-		private Stream<FormalParameter> formalParameterList(AST parameterList) {
-			return collectNonTerminals(parameterList, p -> p.getName().equals("formalParameter"))
-				.map(param -> {
-					Terminal typ = findTerminal(param.getChild(0));
-					Terminal identifier = findTerminal(param.getChild(1));
-					return new FormalParameter(identifier, typ);
-				});
-		}
 
 		private Visibility visibility(List<String> modifiers) {
         	for(String modifier : modifiers) {
@@ -239,24 +199,6 @@ public class JavaOutliner extends MontoService {
         	}
 		}
 
-        private Optional<Terminal> getVariableId(AST var) {
-        	try {
-        		NonTerminal variableDeclarator = (NonTerminal) var;
-        		if(!variableDeclarator.getName().equals("variableDeclarator"))
-        			return Optional.empty();
-        		NonTerminal variableDeclaratorId = (NonTerminal) variableDeclarator.getChild(0);
-        		Terminal variableIdentifier = (Terminal) variableDeclaratorId.getChild(0);
-        		return Optional.of(variableIdentifier);
-        	} catch (Exception e) {
-        		return Optional.empty();
-        	}
-		}
-
-		@Override
-        public void visit(Terminal token) {
-
-        }
-
         private void addChild(Outline o) {
 			converted.peek().addChild(o);
 		}
@@ -265,44 +207,21 @@ public class JavaOutliner extends MontoService {
         	return region.extract(document);
         }
     }
-
-    private static Terminal findTerminal(AST ast) {
-    	return ast.match(
-    		nonTerminal -> findTerminal(nonTerminal.getChild(0)),
-    		terminal -> terminal
-    	);
-    }
-    
-    private static Stream<Terminal> collectTerminals(AST node) {
-    	return node.match(
-    			nonTerminal -> nonTerminal.getChildren().stream().flatMap(n -> collectTerminals(n)),
-    			terminal -> Stream.of(terminal)
-    			);
-    }
-    
-    private static Stream<NonTerminal> collectNonTerminals(AST node, Predicate<NonTerminal> p) {
-    	return node.match(
-    			nonTerminal ->
-    				p.test(nonTerminal)
-    				  ? Stream.of(nonTerminal)
-    				  : nonTerminal.getChildren().stream().flatMap(n -> collectNonTerminals(n,p)),
-    			terminal -> Stream.of());
-    }
     
     public class FormalParameter {
-    	private Terminal identifier;
-		private Terminal type;
+    	private ASTNode identifier;
+		private ASTNode type;
 
-		public FormalParameter(Terminal identifier, Terminal type) {
-			this.identifier = identifier;
-    		this.type = type;
+		public FormalParameter(ASTNode identifier2, ASTNode typ) {
+			this.identifier = identifier2;
+    		this.type = typ;
     	}
 
-		public Terminal getIdentifier() {
+		public ASTNode getIdentifier() {
 			return identifier;
 		}
 
-		public Terminal getType() {
+		public ASTNode getType() {
 			return type;
 		}
     }

@@ -9,6 +9,7 @@ import java.util.List;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -16,10 +17,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.ast.AST;
+import monto.service.ast.ASTNode;
 import monto.service.ast.ASTs;
-import monto.service.ast.NonTerminal;
-import monto.service.ast.Terminal;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.java8.antlr.Java8Parser;
 import monto.service.product.ProductMessage;
@@ -29,13 +28,12 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 
-public class JavaParser extends MontoService {
+public class ANTLRJavaParser extends MontoService {
 
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
-    CommonTokenStream tokens = new CommonTokenStream(lexer);
-    Java8Parser parser = new Java8Parser(tokens);
+    Java8Parser parser = new Java8Parser(new CommonTokenStream(lexer));
 
-    public JavaParser(ZMQConfiguration zmqConfig) {
+    public ANTLRJavaParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
         		JavaServices.JAVA_PARSER,
         		"Parser",
@@ -52,14 +50,16 @@ public class JavaParser extends MontoService {
     public ProductMessage onRequest(Request request) throws IOException {
     	SourceMessage version = request.getSourceMessage()
     			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+    	lexer.reset();
+    	parser.reset();
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        parser.setTokenStream(tokens);
+        parser.setTokenStream(new CommonTokenStream(lexer));
         ParserRuleContext root = parser.compilationUnit();
         ParseTreeWalker walker = new ParseTreeWalker();
 
         Converter converter = new Converter();
         walker.walk(converter, root);
+        System.out.println(converter.getRoot());
 
         return productMessage(
                 version.getId(),
@@ -71,14 +71,16 @@ public class JavaParser extends MontoService {
 
     private static class Converter implements ParseTreeListener {
 
-        private Deque<AST> nodes = new ArrayDeque<>();
+        private Deque<ASTNode> nodes = new ArrayDeque<>();
 
         @Override
         public void enterEveryRule(ParserRuleContext context) {
             if (context.getChildCount() > 0) {
                 String name = Java8Parser.ruleNames[context.getRuleIndex()];
-                List<AST> childs = new ArrayList<>(context.getChildCount());
-                NonTerminal node = new NonTerminal(name, childs);
+                List<ASTNode> children = new ArrayList<>(context.getChildCount());
+                Interval interval = context.getSourceInterval();
+                
+                ASTNode node = new ASTNode(name, children, interval.a, interval.length());
                 addChild(node);
                 nodes.push(node);
             }
@@ -90,58 +92,38 @@ public class JavaParser extends MontoService {
             if (nodes.size() > 1)
                 nodes.pop();
         }
+//
+//        @Override
+//        public void visitErrorNode(ErrorNode err) {
+//            org.antlr.v4.runtime.Token symbol = err.getSymbol();
+//            addChild(new NonTerminal("error", new Terminal(symbol.getStartIndex(), symbol.getStopIndex() - symbol.getStartIndex() + 1)));
+//        }
+//
+//        @Override
+//        public void visitTerminal(TerminalNode terminal) {
+//            org.antlr.v4.runtime.Token symbol = terminal.getSymbol();
+//            Terminal token = new Terminal(symbol.getStartIndex(), symbol.getStopIndex() - symbol.getStartIndex() + 1);
+//            if (nodes.size() == 0)
+//                nodes.push(token);
+//            else
+//                addChild(token);
+//        }
 
-        @Override
-        public void visitErrorNode(ErrorNode err) {
-            org.antlr.v4.runtime.Token symbol = err.getSymbol();
-            addChild(new NonTerminal("error", new Terminal(symbol.getStartIndex(), symbol.getStopIndex() - symbol.getStartIndex() + 1)));
+        private void addChild(ASTNode node) {
+        	if(nodes.isEmpty())
+        		nodes.add(node);
+        	else
+        		nodes.peek().addChild(node);
         }
 
-        @Override
-        public void visitTerminal(TerminalNode terminal) {
-            org.antlr.v4.runtime.Token symbol = terminal.getSymbol();
-            Terminal token = new Terminal(symbol.getStartIndex(), symbol.getStopIndex() - symbol.getStartIndex() + 1);
-            if (nodes.size() == 0)
-                nodes.push(token);
-            else
-                addChild(token);
-        }
-
-        private void addChild(AST node) {
-            if (!nodes.isEmpty() && nodes.peek() instanceof NonTerminal)
-                ((NonTerminal) nodes.peek()).addChild(node);
-        }
-
-        public AST getRoot() {
+        public ASTNode getRoot() {
             return nodes.peek();
         }
-    }
 
-    /**
-     * Checks if the given AST is complete, i.e. contains no error nodes.
-     * The complexity of this method is O(n) where n is the number of elements
-     * in the AST.
-     */
-//	public static boolean isComplete(AST node) {
-//		Complete isComplete = new Complete();
-//		node.accept(isComplete);
-//		return isComplete.complete;
-//	}
-//	
-//	private static class Complete implements ASTVisitor {
-//
-//		public boolean complete = true;
-//
-//		@Override
-//		public void visit(NonTerminal node) {
-//			if(node.getName().equals("error"))
-//				complete = false;
-//			for(AST child : node.getChildren())
-//				child.accept(this);
-//		}
-//
-//		@Override
-//		public void visit(Terminal token) {}
-//		
-//	}
+		@Override
+		public void visitErrorNode(ErrorNode arg0) {}
+
+		@Override
+		public void visitTerminal(TerminalNode arg0) {}
+    }
 }
