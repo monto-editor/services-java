@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.zeromq.ZContext;
 
 import monto.service.ZMQConfiguration;
-import monto.service.java8.GithubJavaParser;
+import monto.service.java8.JavaJavaCCParser;
 import monto.service.java8.JavaOutliner;
 import monto.service.product.ProductMessage;
 import monto.service.request.Request;
@@ -18,7 +18,7 @@ import monto.service.types.Source;
 
 public class OutlineBenchmark extends Benchmark {
 
-	private GithubJavaParser parser;
+	private JavaJavaCCParser parser;
 	private JavaOutliner outliner;
 	private ZContext context;
 	private LongKey id = new LongKey(0);
@@ -32,9 +32,9 @@ public class OutlineBenchmark extends Benchmark {
         		"tcp://*",
         		"tcp://*:5004",
         		"tcp://*:5007",
-        		"tcp://*:5008",
+        		"tcp://*:5009",
         		8080);
-		parser = new GithubJavaParser(zmqConfig);
+		parser = new JavaJavaCCParser(zmqConfig);
 		outliner = new JavaOutliner(zmqConfig);
 	}
 

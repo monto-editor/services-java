@@ -51,6 +51,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 				"--registration", "tcp://*:5004",
 				"--discovery", "tcp://*:5005",
 				"--config", "tcp://*:5007",
+				"--dyndep", "tcp://*:5009",
 				"--topic", "[ServiceID]",
 				"--servicesFrom", "Port 5010",
 				"--servicesTo", "Port 5025")
@@ -72,6 +73,8 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 		command.add("tcp://*:5007");
 		command.add("-resources");
 		command.add("8080");
+		command.add("-dyndep");
+		command.add("tcp://*:5009");
 		services = new ProcessBuilder(command)
 				.redirectOutput(new File("services.stdout"))
 				.redirectError(new File("services.stderr"))
@@ -114,9 +117,9 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 		Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
 		Path brokerPath = Paths.get(System.getProperty("broker"));
 		Path servicesJar = Paths.get(System.getProperty("services.jar"));
-		for(ServiceID service : Arrays.asList(JavaServices.JAVA_TOKENIZER, JavaServices.JAVA_PARSER, JavaServices.JAVA_OUTLINER)) {
+		for(ServiceID service : Arrays.asList(JavaServices.JAVA_TOKENIZER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
 			Path csvOutput = csvOutputDir.resolve(service.toString()+".csv");
-			ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-t", "-p", "-o");
+			ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-tokenizer", "-javaccparser", "-outline");
 			bench.runBenchmark(corpus, csvOutput, 100, 20);
 		}
 	}

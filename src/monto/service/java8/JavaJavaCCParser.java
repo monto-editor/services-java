@@ -32,13 +32,13 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 
-public class GithubJavaParser extends MontoService {
+public class JavaJavaCCParser extends MontoService {
 
-    public GithubJavaParser(ZMQConfiguration zmqConfig) {
+    public JavaJavaCCParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-        		JavaServices.JAVA_PARSER,
-        		"Parser",
-        		"A parser that produces an AST for Java using ANTLR",
+        		JavaServices.JAVA_JAVACC_PARSER,
+        		"JavaCC Parser",
+        		"A parser that produces an AST for Java using JavaCC",
         		Languages.JAVA,
         		Products.AST,
         		options(),

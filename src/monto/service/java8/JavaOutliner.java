@@ -38,7 +38,7 @@ public class JavaOutliner extends MontoService {
     			options(),
     			dependencies(
     					new SourceDependency(Languages.JAVA),
-    					new ProductDependency(JavaServices.JAVA_PARSER, Products.AST, Languages.JAVA)
+    					new ProductDependency(JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
     			));
     }
 

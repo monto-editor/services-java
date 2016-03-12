@@ -80,7 +80,7 @@ public class JavaFileGraph extends MontoService {
         boolean foundImport = false;
         for (Token t : Tokens.decode(tokens)) {
             if (foundImport && t.getCategory() == Category.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
-                String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").toLowerCase().trim() + ".java";
+                String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java") || !validClassName(str)) {
                     foundImport = false;
                     continue;

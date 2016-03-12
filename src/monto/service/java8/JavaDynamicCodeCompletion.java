@@ -40,7 +40,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 options(),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_PARSER, Products.AST, Languages.JAVA),
+                        new ProductDependency(JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA),
                         new ProductDependency(JavaServices.JAVA_TOKENIZER, Products.TOKENS, Languages.JAVA)
                 ));
     }
@@ -111,7 +111,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
 
                 Set<Edge> edges = new HashSet<>();
                 edges.add(new Edge(Products.AST, Languages.JAVA));
-                dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_PARSER, edges));
+                dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, edges));
                 Set<Edge> edges2 = new HashSet<>();
                 edges2.add(new Edge(new Product("source"), Languages.JAVA));
                 dynDeps.add(new DynamicDependency(s, new ServiceID("source"), edges2));

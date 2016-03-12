@@ -17,7 +17,8 @@ import monto.service.types.ServiceID;
 public class JavaServices {
 
 	public static final ServiceID JAVA_TOKENIZER = new ServiceID("javaTokenizer");
-	public static final ServiceID JAVA_PARSER = new ServiceID("javaParser");
+	public static final ServiceID JAVA_ANTLR_PARSER = new ServiceID("javaAntlrParser");
+	public static final ServiceID JAVA_JAVACC_PARSER = new ServiceID("javaJavaCCParser");
     public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
 	public static final ServiceID JAVA_CODE_COMPLETION = new ServiceID("javaCodeCompletion");
     public static final ServiceID JAVA_FILE_DEPENDENCIES = new ServiceID("javaFileDependencies");
@@ -46,17 +47,18 @@ public class JavaServices {
         });
 
         Options options = new Options();
-        options.addOption("t", false, "enable java tokenizer")
-                .addOption("p", false, "enable java parser")
-                .addOption("o", false, "enable java outliner")
-                .addOption("c", false, "enable java code completioner")
-                .addOption("cd", false, "enable java dynamic code completioner")
-                .addOption("d", false, "enable java file dependencies")
-                .addOption("address", true, "address of services")
-                .addOption("registration", true, "address of broker registration")
-                .addOption("configuration", true, "address of configuration messages")
-                .addOption("resources", true, "port for http resource server")
-                .addOption("dyndeps", true, "port for dynamic dependencies registrations");
+        options.addOption("tokenizer", false, "enable Java tokenizer")
+               .addOption("antlrparser", false, "enable Java ANTLR parser")
+               .addOption("javaccparser", false, "enable JavaCC parser")
+               .addOption("outline", false, "enable Java outliner")
+               .addOption("codecompletion", false, "enable Java code completioner")
+               .addOption("dynamiccodecompletion", false, "enable Java dynamic code completioner")
+               .addOption("filedependencies", false, "enable Java file dependencies")
+               .addOption("address", true, "address of services")
+               .addOption("registration", true, "address of broker registration")
+               .addOption("configuration", true, "address of configuration messages")
+               .addOption("resources", true, "port for http resource server")
+               .addOption("dyndeps", true, "port for dynamic dependencies registrations");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -72,27 +74,28 @@ public class JavaServices {
         resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), zmqConfig.getResourcePort());
         resourceServer.start();
         
-        if (cmd.hasOption("t")) {
+        if (cmd.hasOption("tokenizer")) {
             services.add(new JavaTokenizer(zmqConfig));
         }
-        if (cmd.hasOption("p")) {
-            services.add(new GithubJavaParser(zmqConfig));
+        if (cmd.hasOption("javaccparser")) {
+            services.add(new JavaJavaCCParser(zmqConfig));
         }
-        if (cmd.hasOption("o")) {
+        if (cmd.hasOption("antlrparser")) {
+            services.add(new ANTLRJavaParser(zmqConfig));
+        }
+        if (cmd.hasOption("outline")) {
             services.add(new JavaOutliner(zmqConfig));
         }
-        if (cmd.hasOption("c")) {
-            if (cmd.hasOption("cd")) {
-                services.add(new JavaDynamicCodeCompletion(zmqConfig));
-            } else {
-                services.add(new JavaCodeCompletion(zmqConfig));
-            }
+        if (cmd.hasOption("codecompletion")) {
+        	services.add(new JavaCodeCompletion(zmqConfig));
         }
-        if (cmd.hasOption("d")) {
-            services.add(new JavaFileDependencies(zmqConfig));
+        if (cmd.hasOption("dynamiccodecompletion")) {
+                services.add(new JavaDynamicCodeCompletion(zmqConfig));
+        }
+        if (cmd.hasOption("filedependencies")) {
+            //services.add(new JavaFileDependencies(zmqConfig));
             services.add(new JavaFileGraph(zmqConfig));
         }
-
         for (MontoService service : services) {
             service.start();
         }

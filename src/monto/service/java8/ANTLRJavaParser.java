@@ -35,8 +35,8 @@ public class ANTLRJavaParser extends MontoService {
 
     public ANTLRJavaParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-        		JavaServices.JAVA_PARSER,
-        		"Parser",
+        		JavaServices.JAVA_ANTLR_PARSER,
+        		"ANTLR Parser",
         		"A parser that produces an AST for Java using ANTLR",
         		Languages.JAVA,
         		Products.AST,
@@ -59,7 +59,6 @@ public class ANTLRJavaParser extends MontoService {
 
         Converter converter = new Converter();
         walker.walk(converter, root);
-        System.out.println(converter.getRoot());
 
         return productMessage(
                 version.getId(),

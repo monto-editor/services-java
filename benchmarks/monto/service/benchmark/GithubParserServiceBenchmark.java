@@ -10,7 +10,7 @@ import org.zeromq.ZContext;
 import com.github.javaparser.ParseException;
 
 import monto.service.ZMQConfiguration;
-import monto.service.java8.GithubJavaParser;
+import monto.service.java8.JavaJavaCCParser;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
@@ -18,7 +18,7 @@ import monto.service.types.LongKey;
 import monto.service.types.Source;
 
 public class GithubParserServiceBenchmark extends Benchmark {
-	private GithubJavaParser parser;
+	private JavaJavaCCParser parser;
 	private LongKey id = new LongKey(0);
 	private ZContext context;
 	
@@ -32,7 +32,7 @@ public class GithubParserServiceBenchmark extends Benchmark {
         		"tcp://*:5007",
         		"tcp://*:5008",
         		8080);
-		parser = new GithubJavaParser(zmqConfig);
+		parser = new JavaJavaCCParser(zmqConfig);
 	}
 	
 	@Override
