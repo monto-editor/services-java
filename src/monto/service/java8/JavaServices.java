@@ -93,7 +93,7 @@ public class JavaServices {
                 services.add(new JavaDynamicCodeCompletion(zmqConfig));
         }
         if (cmd.hasOption("filedependencies")) {
-            //services.add(new JavaFileDependencies(zmqConfig));
+            services.add(new JavaFileDependencies(zmqConfig));
             services.add(new JavaFileGraph(zmqConfig));
         }
         for (MontoService service : services) {

@@ -85,9 +85,7 @@ public class JavaFileGraph extends MontoService {
                     foundImport = false;
                     continue;
                 }
-                Set<Edge> edges = new HashSet<>();
-                edges.add(new Edge(Products.FILE_GRAPH, Languages.JAVA));
-                dynDeps.add(new DynamicDependency(new Source(str), JavaServices.JAVA_FILE_GRAPH, edges));
+                dynDeps.add(new DynamicDependency(new Source(str), JavaServices.JAVA_FILE_GRAPH, Products.FILE_GRAPH, Languages.JAVA));
 
                 foundImport = false;
             } else if (t.getCategory() == Category.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {

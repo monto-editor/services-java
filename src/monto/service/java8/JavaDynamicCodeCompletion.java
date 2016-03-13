@@ -7,7 +7,6 @@ import monto.service.ast.*;
 import monto.service.completion.Completion;
 import monto.service.completion.Completions;
 import monto.service.dependency.DynamicDependency;
-import monto.service.dependency.Edge;
 import monto.service.dependency.RegisterDynamicDependencies;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
@@ -102,20 +101,14 @@ public class JavaDynamicCodeCompletion extends MontoService {
         boolean foundImport = false;
         for (Token t : Tokens.decode(tokens)) {
             if (foundImport && t.getCategory() == Category.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
-                String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").toLowerCase().trim() + ".java";
+                String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java")) {
                     continue;
                 }
                 Source s = new Source(str);
                 requiredSources.add(s);
-
-                Set<Edge> edges = new HashSet<>();
-                edges.add(new Edge(Products.AST, Languages.JAVA));
-                dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, edges));
-                Set<Edge> edges2 = new HashSet<>();
-                edges2.add(new Edge(new Product("source"), Languages.JAVA));
-                dynDeps.add(new DynamicDependency(s, new ServiceID("source"), edges2));
-
+                dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA));
+                dynDeps.add(new DynamicDependency(s, new ServiceID("source"), new Product("source"), Languages.JAVA));
                 foundImport = false;
             } else if (t.getCategory() == Category.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
                 foundImport = true;
