@@ -141,8 +141,10 @@ public class JavaOutliner extends MontoService {
                 		modifiers.add(modifier.getName());
                 	ASTNode type = node.getChild(1);
                 	for(ASTNode variable : node.getChild(2).getChildren()) {
+                		if(! variable.getName().equals("VariableDeclaratorId"))
+                			continue;
                 		URL fieldIcon = getIcon(modifiers, "field");
-                		String name = String.format("%s : %s", extract(variable), type);
+                		String name = String.format("%s : %s", extract(variable), extract(type));
                 		addChild(new Outline(name, variable, fieldIcon));
                 	}
                 }
