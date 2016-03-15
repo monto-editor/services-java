@@ -49,7 +49,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
         SourceMessage source = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
-        if (source.getSelections().size() > 0) {
+        if (source.getSelection().isPresent()) {
             AST ast = ASTs.decode(request.getProductMessage(Products.AST, Languages.JAVA)
                     .orElseThrow(() -> new IllegalArgumentException("No AST message in request")));
             ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
@@ -63,7 +63,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
             List<Tuple> msgs = getDynamicDependencyMessages(request, requiredSources);
             msgs.add(new Tuple(ast, source));
 
-            List<AST> selectedPath = selectedPath(ast, source.getSelections().get(0));
+            List<AST> selectedPath = selectedPath(ast, source.getSelection().get());
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
                 String toBeCompleted = extract(source.getContent(), last(selectedPath));
 
@@ -76,7 +76,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                                     .map(comp -> new Completion(
                                             msg.src.getSource() + " - " + comp.getDescription() + ": " + comp.getReplacement(),
                                             comp.getReplacement(),
-                                            source.getSelections().get(0).getStartOffset(),
+                                            source.getSelection().get().getStartOffset(),
                                             null))
                                     .collect(Collectors.toList()));
                 }

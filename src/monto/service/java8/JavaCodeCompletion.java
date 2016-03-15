@@ -49,10 +49,10 @@ public class JavaCodeCompletion extends MontoService {
         ProductMessage ast = request.getProductMessage(Products.AST, Languages.JAVA)
         		.orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
         
-        if (version.getSelections().size() > 0) {
+        if (version.getSelection().isPresent()) {
             AST root = ASTs.decode(ast);
             List<Completion> allcompletions = allCompletions(version.getContent(), root);
-            List<AST> selectedPath = selectedPath(root, version.getSelections().get(0));
+            List<AST> selectedPath = selectedPath(root, version.getSelection().get());
 
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
                 String toBeCompleted = extract(version.getContent(),last(selectedPath));
@@ -63,7 +63,7 @@ public class JavaCodeCompletion extends MontoService {
                                 .map(comp -> new Completion(
                                         comp.getDescription() + ": " + comp.getReplacement(),
                                         comp.getReplacement(),
-                                        version.getSelections().get(0).getStartOffset(),
+                                        version.getSelection().get().getStartOffset(),
                                         null))
                                 .collect(Collectors.toList());
                 
