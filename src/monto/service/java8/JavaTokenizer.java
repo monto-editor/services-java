@@ -14,14 +14,18 @@ import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.Category;
+import monto.service.token.FontStore;
+import monto.service.token.Solarized;
 import monto.service.token.Token;
+import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
 import monto.service.types.Languages;
 
 public class JavaTokenizer extends MontoService {
 
-    Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
+    private Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
+    private FontStore fonts = new FontStore();
+	private Solarized theme = Solarized.dark();
 
     public JavaTokenizer(ZMQConfiguration zmqConfig) {
     	super(zmqConfig,
@@ -48,54 +52,52 @@ public class JavaTokenizer extends MontoService {
                 version.getSource(),
                 Products.TOKENS,
                 Languages.JAVA,
-                Tokens.encode(tokens));
+                Tokens.encodeTokens(tokens));
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {
-        int offset = token.getStartIndex();
-        int length = token.getStopIndex() - offset + 1;
 
-        Category category;
+        TokenCategory category;
         switch (token.getType()) {
 
             case Java8Lexer.COMMENT:
             case Java8Lexer.LINE_COMMENT:
-                category = Category.COMMENT;
+                category = TokenCategory.COMMENT;
                 break;
 
             case Java8Lexer.CONST:
             case Java8Lexer.NullLiteral:
-                category = Category.CONSTANT;
+                category = TokenCategory.CONSTANT;
                 break;
 
             case Java8Lexer.StringLiteral:
-                category = Category.STRING;
+                category = TokenCategory.STRING;
                 break;
 
             case Java8Lexer.CharacterLiteral:
-                category = Category.CHARACTER;
+                category = TokenCategory.CHARACTER;
                 break;
 
             case Java8Lexer.IntegerLiteral:
-                category = Category.NUMBER;
+                category = TokenCategory.NUMBER;
                 break;
 
             case Java8Lexer.BooleanLiteral:
-                category = Category.BOOLEAN;
+                category = TokenCategory.BOOLEAN;
                 break;
 
             case Java8Lexer.FloatingPointLiteral:
-                category = Category.FLOAT;
+                category = TokenCategory.FLOAT;
                 break;
 
             case Java8Lexer.Identifier:
-                category = Category.IDENTIFIER;
+                category = TokenCategory.IDENTIFIER;
                 break;
 
             case Java8Lexer.IF:
             case Java8Lexer.ELSE:
             case Java8Lexer.SWITCH:
-                category = Category.CONDITIONAL;
+                category = TokenCategory.CONDITIONAL;
                 break;
 
             case Java8Lexer.FOR:
@@ -103,12 +105,12 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.WHILE:
             case Java8Lexer.CONTINUE:
             case Java8Lexer.BREAK:
-                category = Category.REPEAT;
+                category = TokenCategory.REPEAT;
                 break;
 
             case Java8Lexer.CASE:
             case Java8Lexer.DEFAULT:
-                category = Category.LABEL;
+                category = TokenCategory.LABEL;
                 break;
 
             case Java8Lexer.ADD:
@@ -146,7 +148,7 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.QUESTION:
             case Java8Lexer.COLON:
             case Java8Lexer.INSTANCEOF:
-                category = Category.OPERATOR;
+                category = TokenCategory.OPERATOR;
                 break;
 
             case Java8Lexer.TRY:
@@ -154,7 +156,7 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.THROW:
             case Java8Lexer.THROWS:
             case Java8Lexer.FINALLY:
-                category = Category.EXCEPTION;
+                category = TokenCategory.EXCEPTION;
                 break;
 
             case Java8Lexer.BOOLEAN:
@@ -166,7 +168,7 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.LONG:
             case Java8Lexer.SHORT:
             case Java8Lexer.VOID:
-                category = Category.TYPE;
+                category = TokenCategory.TYPE;
                 break;
 
             case Java8Lexer.ABSTRACT:
@@ -180,13 +182,13 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.TRANSIENT:
             case Java8Lexer.NATIVE:
             case Java8Lexer.STRICTFP:
-                category = Category.MODIFIER;
+                category = TokenCategory.MODIFIER;
                 break;
 
             case Java8Lexer.CLASS:
             case Java8Lexer.ENUM:
             case Java8Lexer.INTERFACE:
-                category = Category.STRUCTURE;
+                category = TokenCategory.STRUCTURE;
                 break;
 
             case Java8Lexer.EXTENDS:
@@ -199,7 +201,7 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.NEW:
             case Java8Lexer.RETURN:
             case Java8Lexer.ASSERT:
-                category = Category.KEYWORD;
+                category = TokenCategory.KEYWORD;
                 break;
 
             case Java8Lexer.LPAREN:
@@ -208,7 +210,7 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.RBRACE:
             case Java8Lexer.LBRACK:
             case Java8Lexer.RBRACK:
-                category = Category.PARENTHESIS;
+                category = TokenCategory.PARENTHESIS;
                 break;
 
             case Java8Lexer.COMMA:
@@ -217,22 +219,24 @@ public class JavaTokenizer extends MontoService {
             case Java8Lexer.ELLIPSIS:
             case Java8Lexer.ARROW:
             case Java8Lexer.COLONCOLON:
-                category = Category.DELIMITER;
+                category = TokenCategory.DELIMITER;
                 break;
 
             case Java8Lexer.AT:
-                category = Category.META;
+                category = TokenCategory.META;
                 break;
 
             case Java8Lexer.WS:
-                category = Category.WHITESPACE;
+                category = TokenCategory.WHITESPACE;
                 break;
 
             default:
-                category = Category.UNKNOWN;
+                category = TokenCategory.UNKNOWN;
         }
 
-        return new Token(offset, length, category);
+        int offset = token.getStartIndex();
+        int length = token.getStopIndex() - offset + 1;
+        return new Token(offset, length, category, fonts.getFont(category.getColor(theme)));
     }
 
 }

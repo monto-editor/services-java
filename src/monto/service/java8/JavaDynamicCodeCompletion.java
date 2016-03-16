@@ -1,9 +1,23 @@
 package monto.service.java8;
 
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.ast.*;
+import monto.service.ast.AST;
+import monto.service.ast.ASTVisitor;
+import monto.service.ast.ASTs;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
 import monto.service.completion.Completion;
 import monto.service.completion.Completions;
 import monto.service.dependency.DynamicDependency;
@@ -15,15 +29,15 @@ import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.Category;
 import monto.service.token.Token;
+import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
-import monto.service.types.*;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
+import monto.service.types.Languages;
+import monto.service.types.ParseException;
+import monto.service.types.Product;
+import monto.service.types.Selection;
+import monto.service.types.ServiceID;
+import monto.service.types.Source;
 
 public class JavaDynamicCodeCompletion extends MontoService {
 
@@ -99,8 +113,8 @@ public class JavaDynamicCodeCompletion extends MontoService {
         Set<DynamicDependency> dynDeps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
-        for (Token t : Tokens.decode(tokens)) {
-            if (foundImport && t.getCategory() == Category.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
+        for (Token t : Tokens.decodeTokenMessage(tokens)) {
+            if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java")) {
                     continue;
@@ -110,7 +124,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA));
                 dynDeps.add(new DynamicDependency(s, new ServiceID("source"), new Product("source"), Languages.JAVA));
                 foundImport = false;
-            } else if (t.getCategory() == Category.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
+            } else if (t.getCategory() == TokenCategory.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
                 foundImport = true;
                 begin = t.getEndOffset();
             }

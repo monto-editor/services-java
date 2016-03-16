@@ -52,9 +52,11 @@ public class JavaJavaCCParser extends MontoService {
     	SourceMessage sourceMessage = request.getSourceMessage()
     			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
 
-    	Node root = JavaParser.parse(new StringReader(sourceMessage.getContent()), true);
-    	
-    	JSONObject encoding =encode(offsets(sourceMessage.getContent()),root);    	
+    	// Remove all tabs to correct source locations of JavaCC Parser
+    	String contents = sourceMessage.getContent().replaceAll("\\t", " ");
+       	
+    	Node root = JavaParser.parse(new StringReader(contents), true);
+    	JSONObject encoding = encode(offsets(sourceMessage.getContent()),root);    	
         return productMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
@@ -63,7 +65,7 @@ public class JavaJavaCCParser extends MontoService {
                 encoding);
     }
 	
-	int[] offsets(String document) {
+	private static int[] offsets(String document) {
 		String lines[] = document.split("\\r?\\n");
 		int[] offsets = new int[lines.length+1];
 		int offset = 0;
@@ -154,7 +156,7 @@ public class JavaJavaCCParser extends MontoService {
 
 	@SuppressWarnings("unchecked")
 	private static JSONObject makeModifierObject(int[] offsets, int modifiers, Node n) {
-		IRegion modRegion = region(offsets, n.getBeginLine(), n.getBeginColumn(), n.getBeginLine(), n.getBeginColumn());
+		IRegion modRegion = region(offsets, n.getBeginLine(), n.getBeginColumn(), n.getEndLine(), n.getEndColumn());
 		List<String> mods = modifiers(modifiers);
 		JSONArray modArray = new JSONArray();
 		for (String mod : mods) {
@@ -172,7 +174,7 @@ public class JavaJavaCCParser extends MontoService {
 			int startOffset = offsets[startLine - 1] + startColumn - 1;
 			int endOffset;
 			if(endLine - 1 >= offsets.length)
-				endOffset = offsets[offsets.length-1];
+				endOffset = offsets[offsets.length-1] + endColumn - 1;
 			else
 				endOffset = offsets[endLine - 1] + endColumn - 1;
 			return new Region(startOffset, endOffset-startOffset+1);

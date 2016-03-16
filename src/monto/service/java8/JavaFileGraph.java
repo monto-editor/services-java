@@ -10,8 +10,8 @@ import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.Category;
 import monto.service.token.Token;
+import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
@@ -78,8 +78,8 @@ public class JavaFileGraph extends MontoService {
         Set<DynamicDependency> dynDeps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
-        for (Token t : Tokens.decode(tokens)) {
-            if (foundImport && t.getCategory() == Category.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
+        for (Token t : Tokens.decodeTokenMessage(tokens)) {
+            if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java") || !validClassName(str)) {
                     foundImport = false;
@@ -88,7 +88,7 @@ public class JavaFileGraph extends MontoService {
                 dynDeps.add(new DynamicDependency(new Source(str), JavaServices.JAVA_FILE_GRAPH, Products.FILE_GRAPH, Languages.JAVA));
 
                 foundImport = false;
-            } else if (t.getCategory() == Category.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
+            } else if (t.getCategory() == TokenCategory.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
                 foundImport = true;
                 begin = t.getEndOffset();
             }
