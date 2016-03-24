@@ -39,10 +39,12 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 		this.servicesPath = servicesPath;
 		this.serviceID = serviceID;
 		this.modes = Arrays.asList(modes);
+		this.filetype = "*.java";
+		this.context = ZMQ.context(1);
 	}
 
 	@Override
-	protected void setup() throws Exception {
+	protected synchronized void setup() throws Exception {
  		System.out.printf("startup broker: %s\n", brokerPath);
 		broker = new ProcessBuilder(
 				brokerPath.toString(),
@@ -51,7 +53,6 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 				"--registration", "tcp://*:5004",
 				"--discovery", "tcp://*:5005",
 				"--config", "tcp://*:5007",
-				"--dyndep", "tcp://*:5009",
 				"--topic", "[ServiceID]",
 				"--servicesFrom", "Port 5010",
 				"--servicesTo", "Port 5025")
@@ -73,7 +74,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 		command.add("tcp://*:5007");
 		command.add("-resources");
 		command.add("8080");
-		command.add("-dyndep");
+		command.add("-dyndeps");
 		command.add("tcp://*:5009");
 		services = new ProcessBuilder(command)
 				.redirectOutput(new File("services.stdout"))
@@ -81,7 +82,6 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 				.start();
 		Thread.sleep(1000);
 		System.out.println("setup connection");
-		context = ZMQ.context(1);
 		publish = new PublishSource(new Publish(context, "tcp://localhost:5000"));
 		publish.connect();
 		subscribe = new Subscribe(context, "tcp://localhost:5001");
@@ -93,23 +93,29 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	protected synchronized void tearDown() throws Exception {
 		System.out.println("Tear Down");
-		services.destroy();
-		services.waitFor();
-		broker.destroy();
-		broker.waitFor();
-		publish.close();
-		sink.close();
-		context.close();
+		try {
+			services.destroy();
+			services.waitFor();
+			broker.destroy();
+			broker.waitFor();
+			publish.close();
+			sink.close();
+//			context.close();
+		} catch (Throwable e) {
+			System.err.println(e);
+		}
 	}
 	
 	@Override
-	protected void measure(Source source, String contents) {
+	protected long measure(Source source, String contents) {
 		SourceMessage srcMsg = new SourceMessage(id, source, Languages.JAVA, contents);
 		id = id.freshId();
 		publish.sendMessage(srcMsg);
-		sink.receiveMessage().orElseThrow(() -> new RuntimeException("did not receive product"));
+		return sink.receiveMessage()
+				.orElseThrow(() -> new RuntimeException("did not receive product"))
+				.getTime();
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -117,10 +123,10 @@ public class ServiceIntegrationBenchmark extends Benchmark {
 		Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
 		Path brokerPath = Paths.get(System.getProperty("broker"));
 		Path servicesJar = Paths.get(System.getProperty("services.jar"));
-		for(ServiceID service : Arrays.asList(JavaServices.JAVA_TOKENIZER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
+		for(ServiceID service : Arrays.asList(JavaServices.JAVA_TOKENIZER)) {
 			Path csvOutput = csvOutputDir.resolve(service.toString()+".csv");
 			ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-tokenizer", "-javaccparser", "-outline");
-			bench.runBenchmark(corpus, csvOutput, 100, 20);
+			bench.runBenchmark(corpus, csvOutput, 10, 20);
 		}
 	}
 }

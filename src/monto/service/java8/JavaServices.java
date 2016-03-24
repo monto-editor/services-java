@@ -58,7 +58,8 @@ public class JavaServices {
                .addOption("registration", true, "address of broker registration")
                .addOption("configuration", true, "address of configuration messages")
                .addOption("resources", true, "port for http resource server")
-               .addOption("dyndeps", true, "port for dynamic dependencies registrations");
+               .addOption("dyndeps", true, "port for dynamic dependencies registrations")
+               .addOption("debug", false, "enable debugging output");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -95,6 +96,10 @@ public class JavaServices {
         if (cmd.hasOption("filedependencies")) {
             services.add(new JavaFileDependencies(zmqConfig));
             services.add(new JavaFileGraph(zmqConfig));
+        }
+        if (cmd.hasOption("debug")) {
+        	for(MontoService service : services)
+        		service.enableDebugging();
         }
         for (MontoService service : services) {
             service.start();

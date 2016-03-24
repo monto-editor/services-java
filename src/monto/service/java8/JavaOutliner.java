@@ -50,20 +50,22 @@ public class JavaOutliner extends MontoService {
         		.orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
         ASTNode root = (ASTNode) ASTs.decodeASTNode((JSONObject) ast.getContents());
-
+        long start = System.nanoTime();
         OutlineTrimmer trimmer = new OutlineTrimmer(version);
         try {
         	root.accept(trimmer);
         } catch(Exception e) {
         	throw new RuntimeException(String.format("error while trimming the following AST:\n%s\nLength: %d",root.toString(),version.getContent().length()),e);
         }
+        long end = System.nanoTime();
 
         return productMessage(
                 version.getId(),
                 version.getSource(),
                 Products.OUTLINE,
                 Languages.JAVA,
-                Outlines.encode(trimmer.getConverted()));
+                Outlines.encode(trimmer.getConverted()),
+                ast.getTime() + end - start);
     }
 
     /**

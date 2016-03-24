@@ -15,7 +15,7 @@ import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.token.FontStore;
-import monto.service.token.Solarized;
+import monto.service.token.ColorTheme;
 import monto.service.token.Token;
 import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
@@ -25,7 +25,7 @@ public class JavaTokenizer extends MontoService {
 
     private Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
     private FontStore fonts = new FontStore();
-	private Solarized theme = Solarized.dark();
+	private ColorTheme theme = ColorTheme.solarized();
 
     public JavaTokenizer(ZMQConfiguration zmqConfig) {
     	super(zmqConfig,
@@ -44,15 +44,19 @@ public class JavaTokenizer extends MontoService {
     public ProductMessage onRequest(Request request) throws IOException {
 		SourceMessage version = request.getSourceMessage()
     			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+        
+        long start = System.nanoTime();
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
         List<Token> tokens = lexer.getAllTokens().stream().map(token -> convertToken(token)).collect(Collectors.toList());
-
+        long end = System.nanoTime();
+        
         return productMessage(
                 version.getId(),
                 version.getSource(),
                 Products.TOKENS,
                 Languages.JAVA,
-                Tokens.encodeTokens(tokens));
+                Tokens.encodeTokens(tokens),
+                end-start);
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {

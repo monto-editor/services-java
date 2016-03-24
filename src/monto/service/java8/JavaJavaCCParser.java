@@ -54,15 +54,19 @@ public class JavaJavaCCParser extends MontoService {
 
     	// Remove all tabs to correct source locations of JavaCC Parser
     	String contents = sourceMessage.getContent().replaceAll("\\t", " ");
-       	
+
+    	long start = System.nanoTime();
     	Node root = JavaParser.parse(new StringReader(contents), true);
+    	long end = System.nanoTime();
+    	
     	JSONObject encoding = encode(offsets(sourceMessage.getContent()),root);    	
         return productMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
                 Products.AST,
                 Languages.JAVA,
-                encoding);
+                encoding,
+                end - start);
     }
 	
 	private static int[] offsets(String document) {
