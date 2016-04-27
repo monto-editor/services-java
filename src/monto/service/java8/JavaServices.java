@@ -72,7 +72,7 @@ public class JavaServices {
                 cmd.getOptionValue("dyndeps"),
         		Integer.parseInt(cmd.getOptionValue("resources")));
 
-        resourceServer = new ResourceServer(JavaServices.class.getResource("/images").getPath(), zmqConfig.getResourcePort());
+        resourceServer = new ResourceServer(JavaServices.class.getResource("/images").toExternalForm(), zmqConfig.getResourcePort());
         resourceServer.start();
         
         if (cmd.hasOption("tokenizer")) {
