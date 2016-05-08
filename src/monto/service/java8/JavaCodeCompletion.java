@@ -57,7 +57,9 @@ public class JavaCodeCompletion extends MontoService {
                         )
                         .collect(Collectors.toList());
 
-        System.out.printf("Relevant: %s\n", relevant);
+        if (debug) {
+            System.out.printf("Relevant: %s\n", relevant);
+        }
         long end = System.nanoTime();
 
         return productMessage(

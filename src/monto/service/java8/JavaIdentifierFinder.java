@@ -59,7 +59,9 @@ public class JavaIdentifierFinder extends MontoService {
         } else {
             identifiers = getIdentifiersFromAST(sourceMessage.getContent(), jsonAst);
         }
-        System.out.println(identifiers);
+        if (debug) {
+            System.out.println(identifiers);
+        }
 
         long end = System.nanoTime();
 
