@@ -10,6 +10,7 @@ import monto.service.identifier.Identifiers;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
+import monto.service.region.Region;
 import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
@@ -97,13 +98,35 @@ public class JavaIdentifierFinder extends MontoService {
         public void visit(ASTNode node) {
             switch (node.getName()) {
 
-                case "PackageDeclaration":
-                    identifiers.add(new Identifier(extract(content, node), Identifier.IdentifierType.PACKAGE));
+                case "ImportDeclaration":
+                    ASTNode importNameExpr = node.getChild(0);
+                    IRegion rightMostImportRegion;
+                    if (importNameExpr.getChildren().size() > 0) {
+                        IRegion nextHigherRegion = importNameExpr.getChild(0);
+                        int lengthDiff = importNameExpr.getEndOffset() - nextHigherRegion.getEndOffset();
+                        // + 1 to exclude separating .
+                        // - 1 to exclude ;
+                        rightMostImportRegion = new Region(nextHigherRegion.getEndOffset() + 1, lengthDiff - 1);
+
+                    } else {
+                        rightMostImportRegion = importNameExpr;
+                    }
+                    identifiers.add(new Identifier(extract(content, rightMostImportRegion), Identifier.IdentifierType.IMPORT));
                     break;
 
                 case "ClassDeclaration":
                     identifiers.add(new Identifier(extract(content, node.getChild(1)), Identifier.IdentifierType.CLASS));
                     traverseChildren(node);
+                    break;
+
+                case "EnumDeclaration":
+                    String enumName = extract(content, node.getChild(1));
+                    identifiers.add(new Identifier(enumName, Identifier.IdentifierType.ENUM));
+                    node.getChildren().stream()
+                            .filter(identifier -> identifier.getName().equals("EnumConstantDeclaration"))
+                            .forEach(identifier -> identifiers.add(
+                                    new Identifier(enumName + "." + extract(content, identifier), Identifier.IdentifierType.ENUM)
+                            ));
                     break;
 
                 case "InterfaceDeclaration":

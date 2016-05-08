@@ -71,20 +71,22 @@ public class JavaCodeCompletion extends MontoService {
 
     private URL identifierTypeToIcon(Identifier.IdentifierType identifierType) {
         switch (identifierType) {
-            case PACKAGE:
+            case IMPORT:
                 return getResource("package.png");
-            case VARIABLE:
-                return getResource("field-private.png");
             case CLASS:
                 return getResource("class-public.png");
-            case METHOD:
-                return getResource("method-public.png");
             case INTERFACE:
                 return getResource("class-package.png");
-            case GENERIC:
+            case ENUM:
                 return getResource("package.png");
+            case METHOD:
+                return getResource("method-public.png");
             case FIELD:
                 return getResource("field-public.png");
+            case VARIABLE:
+                return getResource("field-private.png");
+            case GENERIC:
+                return getResource("package.png");
             default:
                 return null;
         }
