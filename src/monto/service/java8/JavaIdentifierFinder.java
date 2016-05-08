@@ -17,7 +17,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
@@ -62,9 +61,6 @@ public class JavaIdentifierFinder extends MontoService {
         }
         System.out.println(identifiers);
 
-        JSONArray jsonArray = new JSONArray();
-        //noinspection unchecked
-        jsonArray.addAll(identifiers.stream().map(Identifiers::encode).collect(Collectors.toList()));
         long end = System.nanoTime();
 
         return productMessage(
@@ -72,7 +68,7 @@ public class JavaIdentifierFinder extends MontoService {
                 sourceMessage.getSource(),
                 Products.IDENTIFIER,
                 Languages.JAVA,
-                jsonArray,
+                Identifiers.encode(identifiers),
                 astMessage.getTime() + end - start
         );
     }
