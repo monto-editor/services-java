@@ -19,12 +19,28 @@ import monto.service.types.Languages;
 import monto.service.types.ParseException;
 import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JavaIdentifierFinder extends MontoService {
+
+    protected boolean filterOutKeywordsAndLitetalFromCodewords = true;
+    protected boolean sortIdentifiersAlphabetically = true;
+
+    public static final Set<String> JAVA_KEYWORDS_AND_LITERALS =
+            Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+                    // keywords
+                    "abstract", "continue", "for", "new", "switch", "assert", "default", "package", "synchronized",
+                    "boolean", "do", "if", "private", "this", "break", "double", "implements", "protected", "throw",
+                    "byte", "else", "import", "public", "throws", "case", "enum", "instanceof", "return", "transient",
+                    "catch", "extends", "int", "short", "try", "char", "final", "interface", "static", "void", "class",
+                    "finally", "long", "strictfp", "volatile", "float", "native", "super", "while",
+                    // unused keywords
+                    "goto", "const",
+                    // literals
+                    "true", "false", "null"
+                    // taken from: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
+            )));
 
     public JavaIdentifierFinder(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
@@ -52,13 +68,24 @@ public class JavaIdentifierFinder extends MontoService {
 
         JSONObject jsonAst = (JSONObject) astMessage.getContents();
 
-        List<Identifier> identifiers;
+        Collection<Identifier> identifiers;
         if (jsonAst.get("notAvailable") != null) {
             // fallback to source message
             identifiers = getCodewordsFromSourceMessage(sourceMessage);
+            if (filterOutKeywordsAndLitetalFromCodewords) {
+                identifiers = identifiers.stream()
+                        .filter(identifier -> !JAVA_KEYWORDS_AND_LITERALS.contains(identifier.getIdentifier()))
+                        .collect(Collectors.toSet());
+            }
         } else {
             identifiers = getIdentifiersFromAST(sourceMessage.getContent(), jsonAst);
         }
+        if (sortIdentifiersAlphabetically) {
+            identifiers = identifiers.stream()
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
         if (debug) {
             System.out.println(identifiers);
         }
@@ -75,7 +102,7 @@ public class JavaIdentifierFinder extends MontoService {
         );
     }
 
-    private List<Identifier> getIdentifiersFromAST(String contents, JSONObject jsonAst) throws ParseException {
+    private Set<Identifier> getIdentifiersFromAST(String contents, JSONObject jsonAst) throws ParseException {
         ASTNode root = ASTs.decodeASTNode(jsonAst);
 
         AllIdentifiers completionVisitor = new AllIdentifiers(contents);
@@ -84,7 +111,7 @@ public class JavaIdentifierFinder extends MontoService {
     }
 
     private class AllIdentifiers implements ASTNodeVisitor {
-        private List<Identifier> identifiers = new ArrayList<>();
+        private Set<Identifier> identifiers = new HashSet<>();
         private String content;
         private boolean fieldDeclaration = false;
 
@@ -161,7 +188,7 @@ public class JavaIdentifierFinder extends MontoService {
             }
         }
 
-        public List<Identifier> getIdentifiers() {
+        public Set<Identifier> getIdentifiers() {
             return identifiers;
         }
     }
@@ -171,7 +198,7 @@ public class JavaIdentifierFinder extends MontoService {
     }
 
 
-    private List<Identifier> getCodewordsFromSourceMessage(SourceMessage sourceMessage) {
+    private Set<Identifier> getCodewordsFromSourceMessage(SourceMessage sourceMessage) {
         String content = sourceMessage.getContent();
         // cleanup source code by removing elements, that are not identifiers
 
@@ -192,12 +219,12 @@ public class JavaIdentifierFinder extends MontoService {
 //        HashSet<String> identifierSet = new HashSet<>(Arrays.asList(identifiers));
         /** end first attempt */
 
-        /** seconc attempt: only alphanumerics */
+        /** second attempt: only alphanumerics */
         // remove strings and chars
         content = content.replaceAll("(\".*\"|'.*')", "");
         // replace everything non alphanumeric with one space
         content = content.replaceAll("\\W+", " ");
-        /** end seconc attempt */
+        /** end second attempt */
 
         // split at whitespaces
         return Arrays.stream(content.split("\\s+"))
@@ -205,11 +232,9 @@ public class JavaIdentifierFinder extends MontoService {
                 .filter((String str) -> !(str.matches("^[\\deE]+$") || str.matches("^0[xX].*")))
                 // create non-duplicate set
                 .collect(Collectors.toSet())
-                // convert to stream again to sort or else order is arbitrary
                 .stream()
-                .sorted()
                 // convert strings to Identifier objetcs
                 .map((String identifier) -> new Identifier(identifier, Identifier.IdentifierType.GENERIC))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 }
