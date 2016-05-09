@@ -228,8 +228,11 @@ public class JavaIdentifierFinder extends MontoService {
 
         // split at whitespaces
         return Arrays.stream(content.split("\\s+"))
-                // remove numbers (including scientific notation and hexadecimals)
-                .filter((String str) -> !(str.matches("^[\\deE]+$") || str.matches("^0[xX].*")))
+                // remove numbers (including scientific notation, explicit double, float and long values and hexadecimals)
+                // since Java 7 numeric literal can contain underscors to improve readability
+                // https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
+                // also used document: http://web.itu.edu.tr/~bkurt/Courses/bte541/bte541b_mod03.pdf
+                .filter((String str) -> !(str.matches("^[\\d_eE]+[dDfFlL]?$") || str.matches("^0[xX].*")))
                 // create non-duplicate set
                 .collect(Collectors.toSet())
                 .stream()
