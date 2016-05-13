@@ -67,12 +67,12 @@ public class JavaDynamicCodeCompletion extends MontoService {
 
             List<AST> selectedPath = selectedPath(ast, source.getSelection().get());
             if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
-                String toBeCompleted = extract(source.getContent(), last(selectedPath));
+                String toBeCompleted = extract(source.getContents(), last(selectedPath));
 
                 List<Completion> relevantCompletions = new ArrayList<>();
                 for (Tuple msg : msgs) {
                     relevantCompletions.addAll(
-                            allCompletions(msg.src.getContent(), msg.ast)
+                            allCompletions(msg.src.getContents(), msg.ast)
                                     .stream()
                                     .filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
                                     .map(comp -> new Completion(
@@ -102,8 +102,8 @@ public class JavaDynamicCodeCompletion extends MontoService {
         int begin = 0;
         boolean foundImport = false;
         for (Token t : Tokens.decodeTokenMessage(tokens)) {
-            if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
-                String str = source.getContent().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
+            if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
+                String str = source.getContents().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java")) {
                     continue;
                 }
@@ -112,7 +112,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA));
                 dynDeps.add(new DynamicDependency(s, new ServiceId("source"), new Product("source"), Languages.JAVA));
                 foundImport = false;
-            } else if (t.getCategory() == TokenCategory.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
+            } else if (t.getCategory() == TokenCategory.KEYWORD && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
                 foundImport = true;
                 begin = t.getEndOffset();
             }

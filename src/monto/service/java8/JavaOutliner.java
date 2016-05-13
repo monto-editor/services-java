@@ -54,7 +54,7 @@ public class JavaOutliner extends MontoService {
         try {
             root.accept(trimmer);
         } catch (Exception e) {
-            throw new RuntimeException(String.format("error while trimming the following AST:\n%s\nLength: %d", root.toString(), version.getContent().length()), e);
+            throw new RuntimeException(String.format("error while trimming the following AST:\n%s\nLength: %d", root.toString(), version.getContents().length()), e);
         }
         long end = System.nanoTime();
 
@@ -76,7 +76,7 @@ public class JavaOutliner extends MontoService {
         private String document;
 
         public OutlineTrimmer(SourceMessage version) {
-            this.document = version.getContent();
+            this.document = version.getContents();
         }
 
         public Outline getConverted() {

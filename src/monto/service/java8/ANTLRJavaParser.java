@@ -51,7 +51,7 @@ public class ANTLRJavaParser extends MontoService {
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
         lexer.reset();
         parser.reset();
-        lexer.setInputStream(new ANTLRInputStream(version.getContent()));
+        lexer.setInputStream(new ANTLRInputStream(version.getContents()));
         parser.setTokenStream(new CommonTokenStream(lexer));
         ParserRuleContext root = parser.compilationUnit();
         ParseTreeWalker walker = new ParseTreeWalker();

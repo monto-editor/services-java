@@ -44,13 +44,13 @@ public class JavaJavaCCParser extends MontoService {
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
 
         // Remove all tabs to correct source locations of JavaCC Parser
-        String contents = sourceMessage.getContent().replaceAll("\\t", " ");
+        String contents = sourceMessage.getContents().replaceAll("\\t", " ");
 
         long start = System.nanoTime();
         JSONObject content;
         try {
             Node root = JavaParser.parse(new StringReader(contents), true);
-            content = encode(offsets(sourceMessage.getContent()), root);
+            content = encode(offsets(sourceMessage.getContents()), root);
         } catch (ParseException e) {
             e.printStackTrace();
             content = new JSONObject();

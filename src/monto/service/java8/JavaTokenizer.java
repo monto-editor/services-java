@@ -41,7 +41,7 @@ public class JavaTokenizer extends MontoService {
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
 
         long start = System.nanoTime();
-        lexer.setInputStream(new ANTLRInputStream(version.getContent()));
+        lexer.setInputStream(new ANTLRInputStream(version.getContents()));
         List<Token> tokens = lexer.getAllTokens().stream().map(token -> convertToken(token)).collect(Collectors.toList());
         long end = System.nanoTime();
 

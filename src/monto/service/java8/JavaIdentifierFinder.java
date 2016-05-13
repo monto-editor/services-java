@@ -78,7 +78,7 @@ public class JavaIdentifierFinder extends MontoService {
                         .collect(Collectors.toSet());
             }
         } else {
-            identifiers = getIdentifiersFromAST(sourceMessage.getContent(), jsonAst);
+            identifiers = getIdentifiersFromAST(sourceMessage.getContents(), jsonAst);
         }
         if (sortIdentifiersAlphabetically) {
             identifiers = identifiers.stream()
@@ -199,7 +199,7 @@ public class JavaIdentifierFinder extends MontoService {
 
 
     private Set<Identifier> getCodewordsFromSourceMessage(SourceMessage sourceMessage) {
-        String content = sourceMessage.getContent();
+        String content = sourceMessage.getContents();
         // cleanup source code by removing elements, that are not identifiers
 
         // remove comments
