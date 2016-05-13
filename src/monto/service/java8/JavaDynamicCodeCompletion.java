@@ -1,23 +1,9 @@
 package monto.service.java8;
 
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.ast.AST;
-import monto.service.ast.ASTVisitor;
-import monto.service.ast.ASTs;
-import monto.service.ast.NonTerminal;
-import monto.service.ast.Terminal;
+import monto.service.ast.*;
 import monto.service.completion.Completion;
 import monto.service.completion.Completions;
 import monto.service.dependency.DynamicDependency;
@@ -32,12 +18,12 @@ import monto.service.source.SourceMessage;
 import monto.service.token.Token;
 import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
-import monto.service.types.Languages;
-import monto.service.types.ParseException;
-import monto.service.types.Product;
-import monto.service.types.Selection;
-import monto.service.types.ServiceID;
-import monto.service.types.Source;
+import monto.service.types.*;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class JavaDynamicCodeCompletion extends MontoService {
 

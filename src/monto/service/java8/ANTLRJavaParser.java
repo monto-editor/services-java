@@ -1,20 +1,5 @@
 package monto.service.java8;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.ErrorNode;
-import org.antlr.v4.runtime.tree.ParseTreeListener;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.antlr.v4.runtime.tree.TerminalNode;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
@@ -27,6 +12,20 @@ import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 public class ANTLRJavaParser extends MontoService {
 
@@ -35,23 +34,23 @@ public class ANTLRJavaParser extends MontoService {
 
     public ANTLRJavaParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-        		JavaServices.JAVA_ANTLR_PARSER,
-        		"ANTLR Parser",
-        		"A parser that produces an AST for Java using ANTLR",
-        		Languages.JAVA,
-        		Products.AST,
-        		options(),
-        		dependencies(
-        				new SourceDependency(Languages.JAVA)
-        		));
+                JavaServices.JAVA_ANTLR_PARSER,
+                "ANTLR Parser",
+                "A parser that produces an AST for Java using ANTLR",
+                Languages.JAVA,
+                Products.AST,
+                options(),
+                dependencies(
+                        new SourceDependency(Languages.JAVA)
+                ));
     }
 
-	@Override
+    @Override
     public ProductMessage onRequest(Request request) throws IOException {
-    	SourceMessage version = request.getSourceMessage()
-    			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
-    	lexer.reset();
-    	parser.reset();
+        SourceMessage version = request.getSourceMessage()
+                .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+        lexer.reset();
+        parser.reset();
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
         parser.setTokenStream(new CommonTokenStream(lexer));
         ParserRuleContext root = parser.compilationUnit();
@@ -78,7 +77,7 @@ public class ANTLRJavaParser extends MontoService {
                 String name = Java8Parser.ruleNames[context.getRuleIndex()];
                 List<ASTNode> children = new ArrayList<>(context.getChildCount());
                 Interval interval = context.getSourceInterval();
-                
+
                 ASTNode node = new ASTNode(name, children, interval.a, interval.length());
                 addChild(node);
                 nodes.push(node);
@@ -109,20 +108,22 @@ public class ANTLRJavaParser extends MontoService {
 //        }
 
         private void addChild(ASTNode node) {
-        	if(nodes.isEmpty())
-        		nodes.add(node);
-        	else
-        		nodes.peek().addChild(node);
+            if (nodes.isEmpty())
+                nodes.add(node);
+            else
+                nodes.peek().addChild(node);
         }
 
         public ASTNode getRoot() {
             return nodes.peek();
         }
 
-		@Override
-		public void visitErrorNode(ErrorNode arg0) {}
+        @Override
+        public void visitErrorNode(ErrorNode arg0) {
+        }
 
-		@Override
-		public void visitTerminal(TerminalNode arg0) {}
+        @Override
+        public void visitTerminal(TerminalNode arg0) {
+        }
     }
 }

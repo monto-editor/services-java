@@ -1,11 +1,5 @@
 package monto.service.java8;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.antlr.v4.runtime.ANTLRInputStream;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.java8.antlr.Java8Lexer;
@@ -14,49 +8,50 @@ import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.FontStore;
-import monto.service.token.ColorTheme;
-import monto.service.token.Token;
-import monto.service.token.TokenCategory;
-import monto.service.token.Tokens;
+import monto.service.token.*;
 import monto.service.types.Languages;
+import org.antlr.v4.runtime.ANTLRInputStream;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JavaTokenizer extends MontoService {
 
     private Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
     private FontStore fonts = new FontStore();
-	private ColorTheme theme = ColorTheme.solarized();
+    private ColorTheme theme = ColorTheme.solarized();
 
     public JavaTokenizer(ZMQConfiguration zmqConfig) {
-    	super(zmqConfig,
-    			JavaServices.JAVA_TOKENIZER,
-    			"Tokenizer",
-    			"A tokenizer for Java that uses ANTLR for tokenizing",
-    			Languages.JAVA,
-    			Products.TOKENS,
-    			options(),
-    			dependencies(
-    					new SourceDependency(Languages.JAVA)
-    			));
-	}
+        super(zmqConfig,
+                JavaServices.JAVA_TOKENIZER,
+                "Tokenizer",
+                "A tokenizer for Java that uses ANTLR for tokenizing",
+                Languages.JAVA,
+                Products.TOKENS,
+                options(),
+                dependencies(
+                        new SourceDependency(Languages.JAVA)
+                ));
+    }
 
-	@Override
+    @Override
     public ProductMessage onRequest(Request request) throws IOException {
-		SourceMessage version = request.getSourceMessage()
-    			.orElseThrow(() -> new IllegalArgumentException("No version message in request"));
-        
+        SourceMessage version = request.getSourceMessage()
+                .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+
         long start = System.nanoTime();
         lexer.setInputStream(new ANTLRInputStream(version.getContent()));
         List<Token> tokens = lexer.getAllTokens().stream().map(token -> convertToken(token)).collect(Collectors.toList());
         long end = System.nanoTime();
-        
+
         return productMessage(
                 version.getId(),
                 version.getSource(),
                 Products.TOKENS,
                 Languages.JAVA,
                 Tokens.encodeTokens(tokens),
-                end-start);
+                end - start);
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {

@@ -1,10 +1,5 @@
 package monto.service.java8;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.dependency.FileDependencies;
@@ -22,6 +17,11 @@ import monto.service.token.Tokens;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
 import monto.service.types.Source;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class JavaFileDependencies extends MontoService {
 
