@@ -5,9 +5,9 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.*;
 import monto.service.completion.Completion;
-import monto.service.completion.Completions;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterDynamicDependencies;
+import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
@@ -17,7 +17,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.token.Token;
 import monto.service.token.TokenCategory;
-import monto.service.token.Tokens;
 import monto.service.types.*;
 
 import monto.service.types.ServiceId;
@@ -89,7 +88,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                         source.getSource(),
                         Products.COMPLETIONS,
                         Languages.JAVA,
-                        Completions.encode(relevantCompletions));
+                        GsonMonto.toJson(relevantCompletions));
             }
             throw new IllegalArgumentException(
                     String.format("Last token in selection path is not a terminal: %s", selectedPath));
@@ -101,7 +100,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
         Set<DynamicDependency> dynDeps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
-        for (Token t : Tokens.decodeTokenMessage(tokens)) {
+        for (Token t : GsonMonto.fromJsonArray(tokens, Token[].class)) {
             if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContents().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java")) {

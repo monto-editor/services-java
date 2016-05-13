@@ -2,6 +2,7 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
+import monto.service.gson.GsonMonto;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
@@ -50,7 +51,7 @@ public class JavaTokenizer extends MontoService {
                 version.getSource(),
                 Products.TOKENS,
                 Languages.JAVA,
-                Tokens.encodeTokens(tokens),
+                GsonMonto.toJson(tokens),
                 end - start);
     }
 

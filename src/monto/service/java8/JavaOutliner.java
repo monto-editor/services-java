@@ -5,8 +5,8 @@ import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
 import monto.service.ast.ASTs;
+import monto.service.gson.GsonMonto;
 import monto.service.outline.Outline;
-import monto.service.outline.Outlines;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
@@ -63,7 +63,7 @@ public class JavaOutliner extends MontoService {
                 version.getSource(),
                 Products.OUTLINE,
                 Languages.JAVA,
-                Outlines.encode(trimmer.getConverted()),
+                GsonMonto.toJson(trimmer.getConverted()),
                 ast.getTime() + end - start);
     }
 

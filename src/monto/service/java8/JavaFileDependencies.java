@@ -2,9 +2,9 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.dependency.FileDependencies;
 import monto.service.dependency.FileDependency;
 import monto.service.dependency.RegisterDynamicDependencies;
+import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.ProductDependency;
@@ -13,7 +13,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.token.Token;
 import monto.service.token.TokenCategory;
-import monto.service.token.Tokens;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
 import monto.service.types.Source;
@@ -56,14 +55,14 @@ public class JavaFileDependencies extends MontoService {
                 source.getSource(),
                 Products.FILE_DEPENDENCIES,
                 Languages.JAVA,
-                FileDependencies.encode(deps));
+                GsonMonto.toJson(deps));
     }
 
     private FileDependency findFileDepenencies(ProductMessage tokens, SourceMessage source) throws ParseException {
         Set<Source> deps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
-        for (Token t : Tokens.decodeTokenMessage(tokens)) {
+        for (Token t : GsonMonto.fromJson(tokens, Token[].class)) {
             if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContents().substring(begin + 1, t.getStartOffset()).replace(".", "/").toLowerCase().trim() + ".java";
                 if (str.split("/")[0].equals("java")) {

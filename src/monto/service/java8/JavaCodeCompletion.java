@@ -3,9 +3,8 @@ package monto.service.java8;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.completion.Completion;
-import monto.service.completion.Completions;
+import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
-import monto.service.identifier.Identifiers;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.ProductDependency;
@@ -43,7 +42,7 @@ public class JavaCodeCompletion extends MontoService {
         ProductMessage identifierMessage = request.getProductMessage(Products.IDENTIFIER, Languages.JAVA)
                 .orElseThrow(() -> new IllegalArgumentException("No identifier message in request"));
 
-        List<Identifier> identifiers = Identifiers.decode(identifierMessage);
+        List<Identifier> identifiers = GsonMonto.fromJsonArray(identifierMessage, Identifier[].class);
 
         List<Completion> relevant =
                 identifiers
@@ -67,7 +66,7 @@ public class JavaCodeCompletion extends MontoService {
                 sourceMessage.getSource(),
                 Products.COMPLETIONS,
                 Languages.JAVA,
-                Completions.encode(relevant),
+                GsonMonto.toJson(relevant),
                 identifierMessage.getTime() + end - start);
     }
 

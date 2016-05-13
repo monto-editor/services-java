@@ -5,8 +5,8 @@ import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
 import monto.service.ast.ASTs;
+import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
-import monto.service.identifier.Identifiers;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
@@ -92,12 +92,13 @@ public class JavaIdentifierFinder extends MontoService {
 
         long end = System.nanoTime();
 
+
         return productMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
                 Products.IDENTIFIER,
                 Languages.JAVA,
-                Identifiers.encode(identifiers),
+                GsonMonto.toJson(identifiers),
                 astMessage.getTime() + end - start
         );
     }

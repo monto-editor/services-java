@@ -6,6 +6,7 @@ import monto.service.ZMQConfiguration;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.FileDependency;
 import monto.service.dependency.RegisterDynamicDependencies;
+import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.ProductDependency;
@@ -14,15 +15,11 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.token.Token;
 import monto.service.token.TokenCategory;
-import monto.service.token.Tokens;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
 import monto.service.types.Source;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JavaFileGraph extends MontoService {
 
@@ -60,16 +57,18 @@ public class JavaFileGraph extends MontoService {
                 source.getSource(),
                 Products.FILE_GRAPH,
                 Languages.JAVA,
-                FileDependencies.encode(msgs));
+                GsonMonto.toJson(msgs));
     }
 
     private Set<FileDependency> getClassDependencyMessage(Request request, Set<DynamicDependency> dependencies) throws ParseException {
         Set<FileDependency> msgs = new HashSet<>();
         Set<Source> srcs = new HashSet<>();
         for (DynamicDependency d : dependencies) {
-            msgs.addAll(
-                    FileDependencies.decode(request.getProductMessage(d.getSource(), Products.FILE_GRAPH, Languages.JAVA)
-                            .orElseThrow(() -> new IllegalArgumentException("No Class Dependencies message in request for " + d.getSource()))));
+            ProductMessage fileGraph = request.getProductMessage(d.getSource(), Products.FILE_GRAPH, Languages.JAVA)
+                    .orElseThrow(() -> new IllegalArgumentException("No Class Dependencies message in request for " + d.getSource()));
+            // TODO: This Gson conversion is not tested, because .orElseThrow() was always executed
+            List<FileDependency> fileDependencies = GsonMonto.fromJsonArray((String) fileGraph.getContents(), FileDependency[].class);
+            msgs.addAll(fileDependencies);
             srcs.add(d.getSource());
         }
         msgs.add(new FileDependency(request.getSource(), srcs));
@@ -80,7 +79,7 @@ public class JavaFileGraph extends MontoService {
         Set<DynamicDependency> dynDeps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
-        for (Token t : Tokens.decodeTokenMessage(tokens)) {
+        for (Token t : GsonMonto.fromJson(tokens, Token[].class)) {
             if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContents().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
                 if (str.split("/")[0].equals("java") || !validClassName(str)) {
