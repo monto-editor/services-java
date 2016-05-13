@@ -3,7 +3,7 @@ package monto.service.java8;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.resources.ResourceServer;
-import monto.service.types.ServiceID;
+import monto.service.types.ServiceId;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -15,14 +15,14 @@ import java.util.List;
 
 public class JavaServices {
 
-    public static final ServiceID JAVA_TOKENIZER = new ServiceID("javaTokenizer");
-    public static final ServiceID JAVA_ANTLR_PARSER = new ServiceID("javaAntlrParser");
-    public static final ServiceID JAVA_JAVACC_PARSER = new ServiceID("javaJavaCCParser");
-    public static final ServiceID JAVA_OUTLINER = new ServiceID("javaOutliner");
-    public static final ServiceID JAVA_CODE_COMPLETION = new ServiceID("javaCodeCompletion");
-    public static final ServiceID JAVA_FILE_DEPENDENCIES = new ServiceID("javaFileDependencies");
-    public static final ServiceID JAVA_FILE_GRAPH = new ServiceID("javaFileGraph");
-    public static final ServiceID JAVA_IDENTIFIER_FINDER = new ServiceID("javaIdentifierFinder");
+    public static final ServiceId JAVA_TOKENIZER = new ServiceId("javaTokenizer");
+    public static final ServiceId JAVA_ANTLR_PARSER = new ServiceId("javaAntlrParser");
+    public static final ServiceId JAVA_JAVACC_PARSER = new ServiceId("javaJavaCCParser");
+    public static final ServiceId JAVA_OUTLINER = new ServiceId("javaOutliner");
+    public static final ServiceId JAVA_CODE_COMPLETION = new ServiceId("javaCodeCompletion");
+    public static final ServiceId JAVA_FILE_DEPENDENCIES = new ServiceId("javaFileDependencies");
+    public static final ServiceId JAVA_FILE_GRAPH = new ServiceId("javaFileGraph");
+    public static final ServiceId JAVA_IDENTIFIER_FINDER = new ServiceId("javaIdentifierFinder");
 
     private static ResourceServer resourceServer;
 

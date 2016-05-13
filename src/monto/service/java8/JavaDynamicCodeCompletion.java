@@ -20,6 +20,8 @@ import monto.service.token.TokenCategory;
 import monto.service.token.Tokens;
 import monto.service.types.*;
 
+import monto.service.types.ServiceId;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -108,7 +110,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 Source s = new Source(str);
                 requiredSources.add(s);
                 dynDeps.add(new DynamicDependency(s, JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA));
-                dynDeps.add(new DynamicDependency(s, new ServiceID("source"), new Product("source"), Languages.JAVA));
+                dynDeps.add(new DynamicDependency(s, new ServiceId("source"), new Product("source"), Languages.JAVA));
                 foundImport = false;
             } else if (t.getCategory() == TokenCategory.KEYWORD && source.getContent().substring(t.getStartOffset(), t.getEndOffset()).equals("import")) {
                 foundImport = true;
