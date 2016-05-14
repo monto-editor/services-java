@@ -4,7 +4,6 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
-import monto.service.ast.ASTs;
 import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
@@ -17,7 +16,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
-import org.json.simple.JSONObject;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,10 +64,10 @@ public class JavaIdentifierFinder extends MontoService {
 
         long start = System.nanoTime();
 
-        JSONObject jsonAst = (JSONObject) astMessage.getContents();
+        ASTNode astRoot = GsonMonto.fromJson(astMessage, ASTNode.class);
 
         Collection<Identifier> identifiers;
-        if (jsonAst.get("notAvailable") != null) {
+        if (astRoot.getName().equals("NotAvailable")) {
             // fallback to source message
             identifiers = getCodewordsFromSourceMessage(sourceMessage);
             if (filterOutKeywordsAndLitetalFromCodewords) {
@@ -78,7 +76,7 @@ public class JavaIdentifierFinder extends MontoService {
                         .collect(Collectors.toSet());
             }
         } else {
-            identifiers = getIdentifiersFromAST(sourceMessage.getContents(), jsonAst);
+            identifiers = getIdentifiersFromAST(sourceMessage.getContents(), astRoot);
         }
         if (sortIdentifiersAlphabetically) {
             identifiers = identifiers.stream()
@@ -98,16 +96,14 @@ public class JavaIdentifierFinder extends MontoService {
                 sourceMessage.getSource(),
                 Products.IDENTIFIER,
                 Languages.JAVA,
-                GsonMonto.toJson(identifiers),
+                GsonMonto.toJsonTree(identifiers),
                 astMessage.getTime() + end - start
         );
     }
 
-    private Set<Identifier> getIdentifiersFromAST(String contents, JSONObject jsonAst) throws ParseException {
-        ASTNode root = ASTs.decodeASTNode(jsonAst);
-
+    private Set<Identifier> getIdentifiersFromAST(String contents, ASTNode astRoot) throws ParseException {
         AllIdentifiers completionVisitor = new AllIdentifiers(contents);
-        root.accept(completionVisitor);
+        astRoot.accept(completionVisitor);
         return completionVisitor.getIdentifiers();
     }
 

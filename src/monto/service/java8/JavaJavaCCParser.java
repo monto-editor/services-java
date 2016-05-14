@@ -6,6 +6,8 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.*;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
+import monto.service.ast.ASTNode;
+import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
@@ -14,14 +16,13 @@ import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JavaJavaCCParser extends MontoService {
 
@@ -47,15 +48,13 @@ public class JavaJavaCCParser extends MontoService {
         String contents = sourceMessage.getContents().replaceAll("\\t", " ");
 
         long start = System.nanoTime();
-        JSONObject content;
+        ASTNode convertedRoot;
         try {
             Node root = JavaParser.parse(new StringReader(contents), true);
-            content = encode(offsets(sourceMessage.getContents()), root);
+            convertedRoot = encode(offsets(sourceMessage.getContents()), root);
         } catch (ParseException e) {
             e.printStackTrace();
-            content = new JSONObject();
-            //noinspection unchecked
-            content.put("notAvailable", e.getClass().getName() + ": " + e.getMessage());
+            convertedRoot = new ASTNode("NotAvailable", 0, contents.length(), new ArrayList<>());
         }
         long end = System.nanoTime();
 
@@ -64,7 +63,7 @@ public class JavaJavaCCParser extends MontoService {
                 sourceMessage.getSource(),
                 Products.AST,
                 Languages.JAVA,
-                content,
+                GsonMonto.toJsonTree(convertedRoot),
                 end - start);
     }
 
@@ -82,24 +81,16 @@ public class JavaJavaCCParser extends MontoService {
         return offsets;
     }
 
-    @SuppressWarnings("unchecked")
-    public static JSONObject astNode(String name, JSONArray children, IRegion region) {
-        JSONObject obj = new JSONObject();
-        obj.put("name", name);
-        obj.put("offset", region.getStartOffset());
-        obj.put("length", region.getLength());
-        obj.put("children", children);
-        return obj;
+    private ASTNode astNode(String name, List<ASTNode> children, IRegion region) {
+        return new ASTNode(name, region.getStartOffset(), region.getLength(), children);
     }
 
-    @SuppressWarnings("unchecked")
-    public static JSONObject encode(int[] offsets, Node node) {
+    private ASTNode encode(int[] offsets, Node node) {
         String name = node.getClass().getSimpleName();
         IRegion region = region(offsets, node);
-        JSONObject obj = new JSONObject();
-        JSONArray children = new JSONArray();
-        for (Node child : node.getChildrenNodes())
-            children.add(encode(offsets, child));
+        List<ASTNode> children = node.getChildrenNodes().stream()
+                .map(child -> encode(offsets, child))
+                .collect(Collectors.toList());
 
         // Not all parts of the AST appear in node.getChildrenNodes, so we have to
         // include these parts manually.
@@ -136,15 +127,16 @@ public class JavaJavaCCParser extends MontoService {
                 ConstructorDeclaration decl = (ConstructorDeclaration) node;
                 children.add(0, makeModifierObject(offsets, decl.getModifiers(), decl));
                 children.add(1, makeIdentifierObject(offsets, decl.getNameExpr()));
-                JSONArray params = new JSONArray();
-                for (Parameter param : decl.getParameters())
-                    params.add(encode(offsets, param));
-                children.add(2, astNode("Parameters", params, region(offsets, decl)));
+                List<ASTNode> paramsChildren = decl.getParameters().stream()
+                        .map(param -> encode(offsets, param))
+                        .collect(Collectors.toList());
+                children.add(2, astNode("Parameters", paramsChildren, region(offsets, decl)));
             }
             break;
             case "EnumConstantDeclaration": {
                 EnumConstantDeclaration decl = (EnumConstantDeclaration) node;
-                JSONObject idObj = astNode("Identifier", new JSONArray(), region(offsets, decl.getBeginLine(), decl.getBeginColumn(), decl.getEndLine(), decl.getEndColumn() + decl.getName().length()));
+                ASTNode idObj = astNode("Identifier", new ArrayList<>(),
+                        region(offsets, decl.getBeginLine(), decl.getBeginColumn(), decl.getEndLine(), decl.getEndColumn() + decl.getName().length()));
                 children.add(0, idObj);
             }
             break;
@@ -152,33 +144,28 @@ public class JavaJavaCCParser extends MontoService {
                 break;
         }
 
-        obj.put("name", name);
-        obj.put("offset", region.getStartOffset());
-        obj.put("length", region.getLength());
-        obj.put("children", children);
-        return obj;
+        return new ASTNode(name, region.getStartOffset(), region.getLength(), children);
     }
 
-    private static JSONObject makeIdentifierObject(int[] offsets, Node name) {
-        return astNode("Identifier", new JSONArray(), region(offsets, name));
+    private ASTNode makeIdentifierObject(int[] offsets, Node name) {
+        return astNode("Identifier", new ArrayList<>(), region(offsets, name));
     }
 
-    @SuppressWarnings("unchecked")
-    private static JSONObject makeModifierObject(int[] offsets, int modifiers, Node n) {
+    private ASTNode makeModifierObject(int[] offsets, int modifiers, Node n) {
         IRegion modRegion = region(offsets, n.getBeginLine(), n.getBeginColumn(), n.getEndLine(), n.getEndColumn());
         List<String> mods = modifiers(modifiers);
-        JSONArray modArray = new JSONArray();
+        List<ASTNode> modChildrenArray = new ArrayList<>();
         for (String mod : mods) {
-            modArray.add(astNode(mod, new JSONArray(), modRegion));
+            modChildrenArray.add(astNode(mod, new ArrayList<>(), modRegion));
         }
-        return astNode("Modifiers", modArray, modRegion);
+        return astNode("Modifiers", modChildrenArray, modRegion);
     }
 
-    static Region region(int[] offsets, Node node) {
+    private Region region(int[] offsets, Node node) {
         return region(offsets, node.getBeginLine(), node.getBeginColumn(), node.getEndLine(), node.getEndColumn());
     }
 
-    static Region region(int[] offsets, int startLine, int startColumn, int endLine, int endColumn) {
+    private Region region(int[] offsets, int startLine, int startColumn, int endLine, int endColumn) {
         try {
             int startOffset = offsets[startLine - 1] + startColumn - 1;
             int endOffset;
@@ -192,7 +179,7 @@ public class JavaJavaCCParser extends MontoService {
         }
     }
 
-    private static List<String> modifiers(int modifier) {
+    private List<String> modifiers(int modifier) {
         List<String> modifiers = new ArrayList<>();
         if (ModifierSet.isAbstract(modifier))
             modifiers.add("abstract");

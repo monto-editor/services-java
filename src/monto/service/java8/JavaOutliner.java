@@ -4,7 +4,6 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
-import monto.service.ast.ASTs;
 import monto.service.gson.GsonMonto;
 import monto.service.outline.Outline;
 import monto.service.product.ProductMessage;
@@ -16,7 +15,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
-import org.json.simple.JSONObject;
 
 import java.net.URL;
 import java.util.ArrayDeque;
@@ -48,8 +46,13 @@ public class JavaOutliner extends MontoService {
         ProductMessage ast = request.getProductMessage(Products.AST, Languages.JAVA)
                 .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
-        ASTNode root = (ASTNode) ASTs.decodeASTNode((JSONObject) ast.getContents());
         long start = System.nanoTime();
+        ASTNode root = GsonMonto.fromJson(ast, ASTNode.class);
+
+        if (root.getName().equals("NotAvailable")) {
+            throw new IllegalArgumentException("Can't generate Outline with missing AST.");
+        }
+
         OutlineTrimmer trimmer = new OutlineTrimmer(version);
         try {
             root.accept(trimmer);
@@ -63,8 +66,9 @@ public class JavaOutliner extends MontoService {
                 version.getSource(),
                 Products.OUTLINE,
                 Languages.JAVA,
-                GsonMonto.toJson(trimmer.getConverted()),
-                ast.getTime() + end - start);
+                GsonMonto.toJsonTree(trimmer.getConverted()),
+                ast.getTime() + end - start
+        );
     }
 
     /**
@@ -235,7 +239,7 @@ public class JavaOutliner extends MontoService {
         }
     }
 
-    public static enum Visibility {
+    public enum Visibility {
         PUBLIC, PRIVATE, PROTECTED, DEFAULT;
     }
 }
