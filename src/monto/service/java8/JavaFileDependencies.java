@@ -55,7 +55,8 @@ public class JavaFileDependencies extends MontoService {
                 source.getSource(),
                 Products.FILE_DEPENDENCIES,
                 Languages.JAVA,
-                GsonMonto.toJson(deps));
+                GsonMonto.toJsonTree(deps)
+        );
     }
 
     private FileDependency findFileDepenencies(ProductMessage tokens, SourceMessage source) throws ParseException {

@@ -66,7 +66,7 @@ public class JavaCodeCompletion extends MontoService {
                 sourceMessage.getSource(),
                 Products.COMPLETIONS,
                 Languages.JAVA,
-                GsonMonto.toJson(relevant),
+                GsonMonto.toJsonTree(relevant),
                 identifierMessage.getTime() + end - start);
     }
 

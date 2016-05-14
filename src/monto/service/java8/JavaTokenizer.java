@@ -9,7 +9,10 @@ import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.*;
+import monto.service.token.ColorTheme;
+import monto.service.token.FontStore;
+import monto.service.token.Token;
+import monto.service.token.TokenCategory;
 import monto.service.types.Languages;
 import org.antlr.v4.runtime.ANTLRInputStream;
 
@@ -51,8 +54,9 @@ public class JavaTokenizer extends MontoService {
                 version.getSource(),
                 Products.TOKENS,
                 Languages.JAVA,
-                GsonMonto.toJson(tokens),
-                end - start);
+                GsonMonto.toJsonTree(tokens),
+                end - start
+        );
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {

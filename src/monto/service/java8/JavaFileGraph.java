@@ -51,13 +51,13 @@ public class JavaFileGraph extends MontoService {
         sendMissingRequirements(source, dynDeps);
         Set<FileDependency> msgs = getClassDependencyMessage(request, dynDeps);
 
-
         return productMessage(
                 source.getId(),
                 source.getSource(),
                 Products.FILE_GRAPH,
                 Languages.JAVA,
-                GsonMonto.toJson(msgs));
+                GsonMonto.toJsonTree(msgs)
+        );
     }
 
     private Set<FileDependency> getClassDependencyMessage(Request request, Set<DynamicDependency> dependencies) throws ParseException {
@@ -67,7 +67,7 @@ public class JavaFileGraph extends MontoService {
             ProductMessage fileGraph = request.getProductMessage(d.getSource(), Products.FILE_GRAPH, Languages.JAVA)
                     .orElseThrow(() -> new IllegalArgumentException("No Class Dependencies message in request for " + d.getSource()));
             // TODO: This Gson conversion is not tested, because .orElseThrow() was always executed
-            List<FileDependency> fileDependencies = GsonMonto.fromJsonArray((String) fileGraph.getContents(), FileDependency[].class);
+            List<FileDependency> fileDependencies = GsonMonto.fromJsonArray(fileGraph, FileDependency[].class);
             msgs.addAll(fileDependencies);
             srcs.add(d.getSource());
         }

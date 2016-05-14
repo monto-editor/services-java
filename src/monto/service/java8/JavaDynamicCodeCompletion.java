@@ -19,8 +19,6 @@ import monto.service.token.Token;
 import monto.service.token.TokenCategory;
 import monto.service.types.*;
 
-import monto.service.types.ServiceId;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -88,7 +86,8 @@ public class JavaDynamicCodeCompletion extends MontoService {
                         source.getSource(),
                         Products.COMPLETIONS,
                         Languages.JAVA,
-                        GsonMonto.toJson(relevantCompletions));
+                        GsonMonto.toJsonTree(relevantCompletions)
+                );
             }
             throw new IllegalArgumentException(
                     String.format("Last token in selection path is not a terminal: %s", selectedPath));

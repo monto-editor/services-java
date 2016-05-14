@@ -4,6 +4,7 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTs;
+import monto.service.gson.GsonMonto;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.java8.antlr.Java8Parser;
 import monto.service.product.ProductMessage;
@@ -64,7 +65,8 @@ public class ANTLRJavaParser extends MontoService {
                 version.getSource(),
                 Products.AST,
                 Languages.JAVA,
-                ASTs.encode(converter.getRoot()));
+                GsonMonto.toJsonTree(converter.getRoot()) // TODO Gson deserialization of this not tested
+        );
     }
 
     private static class Converter implements ParseTreeListener {
@@ -78,7 +80,7 @@ public class ANTLRJavaParser extends MontoService {
                 List<ASTNode> children = new ArrayList<>(context.getChildCount());
                 Interval interval = context.getSourceInterval();
 
-                ASTNode node = new ASTNode(name, children, interval.a, interval.length());
+                ASTNode node = new ASTNode(name, interval.a, interval.length(), children);
                 addChild(node);
                 nodes.push(node);
             }
