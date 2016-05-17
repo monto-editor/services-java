@@ -3,7 +3,10 @@ package monto.service.java8;
 
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
-import monto.service.ast.*;
+import monto.service.ast.AST;
+import monto.service.ast.ASTVisitor;
+import monto.service.ast.NonTerminal;
+import monto.service.ast.Terminal;
 import monto.service.completion.Completion;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterDynamicDependencies;
@@ -49,10 +52,12 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
         if (source.getSelection().isPresent()) {
-            AST ast = ASTs.decode(request.getProductMessage(Products.AST, Languages.JAVA)
-                    .orElseThrow(() -> new IllegalArgumentException("No AST message in request")));
+            ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
+                    .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
             ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
                     .orElseThrow(() -> new IllegalArgumentException("No Tokens message in request"));
+
+            AST ast = GsonMonto.fromJson(astMessage, AST.class);
 
             Set<Source> requiredSources = new HashSet<>();
             Set<DynamicDependency> dynDeps = findDynamicDependencies(tokens, source, requiredSources);
@@ -121,9 +126,10 @@ public class JavaDynamicCodeCompletion extends MontoService {
     private List<Tuple> getDynamicDependencyMessages(Request request, Set<Source> requiredSources) throws ParseException {
         List<Tuple> msgs = new ArrayList<>();
         for (Source s : requiredSources) {
+            ProductMessage astMessage = request.getProductMessage(s, Products.AST, Languages.JAVA)
+                    .orElseThrow(() -> new IllegalArgumentException("No AST message in request for " + s));
             msgs.add(new Tuple(
-                    ASTs.decode(request.getProductMessage(s, Products.AST, Languages.JAVA)
-                            .orElseThrow(() -> new IllegalArgumentException("No AST message in request for " + s))),
+                    GsonMonto.fromJson(astMessage, AST.class),
                     request.getSourceMessage(s)
                             .orElseThrow(() -> new IllegalArgumentException("No Source message in request for " + s))
             ));
