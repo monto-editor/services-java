@@ -5,6 +5,9 @@ import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
 import monto.service.ast.ASTs;
+import monto.service.configuration.BooleanOption;
+import monto.service.configuration.Configuration;
+import monto.service.configuration.Setting;
 import monto.service.identifier.Identifier;
 import monto.service.identifier.Identifiers;
 import monto.service.product.ProductMessage;
@@ -24,7 +27,9 @@ import java.util.stream.Collectors;
 
 public class JavaIdentifierFinder extends MontoService {
 
-    protected boolean filterOutKeywordsAndLitetalFromCodewords = true;
+    protected static final String OPTION_ID_FILTER_OUT_KEYWORDS = "filterOutKeywords";
+    protected static final String OPTION_ID_SORT_IDENTIFIERS = "sortIdentifiers";
+    protected boolean filterOutKeywords = true;
     protected boolean sortIdentifiersAlphabetically = true;
 
     public static final Set<String> JAVA_KEYWORDS_AND_LITERALS =
@@ -49,12 +54,27 @@ public class JavaIdentifierFinder extends MontoService {
                 "Tries to find identifiers from AST, but can also find codewords from source message, if AST is not available",
                 Languages.JAVA,
                 Products.IDENTIFIER,
-                options(),
+                options(
+                        new BooleanOption(OPTION_ID_FILTER_OUT_KEYWORDS, "Filter out Java Keywords and numeric literals from codewords, when AST is not available", true),
+                        new BooleanOption(OPTION_ID_SORT_IDENTIFIERS, "Sort identifiers alphabetically", false)
+                ),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
                         new ProductDependency(JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
                 )
         );
+    }
+
+    @Override
+    public void onConfigurationMessage(Configuration message) throws Exception {
+        for (Setting setting : message.getConfigurations()) {
+            if (setting.getOptionID().equals(OPTION_ID_FILTER_OUT_KEYWORDS)) {
+                filterOutKeywords = (boolean) setting.getValue();
+            }
+            if (setting.getOptionID().equals(OPTION_ID_SORT_IDENTIFIERS)) {
+                sortIdentifiersAlphabetically = (boolean) setting.getValue();
+            }
+        }
     }
 
     @Override
@@ -72,7 +92,7 @@ public class JavaIdentifierFinder extends MontoService {
         if (jsonAst.get("notAvailable") != null) {
             // fallback to source message
             identifiers = getCodewordsFromSourceMessage(sourceMessage);
-            if (filterOutKeywordsAndLitetalFromCodewords) {
+            if (filterOutKeywords) {
                 identifiers = identifiers.stream()
                         .filter(identifier -> !JAVA_KEYWORDS_AND_LITERALS.contains(identifier.getIdentifier()))
                         .collect(Collectors.toSet());
