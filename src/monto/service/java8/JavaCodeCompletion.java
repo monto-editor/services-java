@@ -50,16 +50,15 @@ public class JavaCodeCompletion extends MontoService {
                         .stream()
                         //.filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
                         .map(identifier -> new Completion(
-                                identifier.getType().name(),
+                                identifier.getType(),
                                 identifier.getIdentifier(),
                                 //sourceMessage.getSelection().get().getStartOffset(),
                                 identifierTypeToIcon(identifier.getType()))
                         )
                         .collect(Collectors.toList());
 
-        if (debug) {
-            System.out.printf("Relevant: %s\n", relevant);
-        }
+//        System.out.printf("Relevant: %s\n", relevant);
+
         long end = System.nanoTime();
 
         return productMessage(
@@ -71,23 +70,23 @@ public class JavaCodeCompletion extends MontoService {
                 identifierMessage.getTime() + end - start);
     }
 
-    private URL identifierTypeToIcon(Identifier.IdentifierType identifierType) {
+    private URL identifierTypeToIcon(String identifierType) {
         switch (identifierType) {
-            case IMPORT:
+            case "import":
                 return getResource("package.png");
-            case CLASS:
+            case "class":
                 return getResource("class-public.png");
-            case INTERFACE:
+            case "interface":
                 return getResource("class-package.png");
-            case ENUM:
+            case "enum":
                 return getResource("package.png");
-            case METHOD:
+            case "method":
                 return getResource("method-public.png");
-            case FIELD:
+            case "field":
                 return getResource("field-public.png");
-            case VARIABLE:
+            case "variable":
                 return getResource("field-private.png");
-            case GENERIC:
+            case "generic":
                 return getResource("package.png");
             default:
                 return null;
