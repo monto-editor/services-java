@@ -8,7 +8,7 @@ import monto.service.java8.JavaServices;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
-import monto.service.types.ServiceID;
+import monto.service.types.ServiceId;
 import monto.service.types.Source;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
@@ -25,7 +25,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
     private final Path brokerPath;
     private final Path servicesPath;
     private final List<String> modes;
-    private ServiceID serviceID;
+    private ServiceId serviceId;
     private Process broker, services;
     private LongKey id = new LongKey(0);
     private Context context;
@@ -33,10 +33,10 @@ public class ServiceIntegrationBenchmark extends Benchmark {
     private Subscribe subscribe;
     private Sink sink;
 
-    public ServiceIntegrationBenchmark(Path brokerPath, Path servicesPath, ServiceID serviceID, String... modes) {
+    public ServiceIntegrationBenchmark(Path brokerPath, Path servicesPath, ServiceId serviceId, String... modes) {
         this.brokerPath = brokerPath;
         this.servicesPath = servicesPath;
-        this.serviceID = serviceID;
+        this.serviceId = serviceId;
         this.modes = Arrays.asList(modes);
         this.filetype = "*.java";
         this.context = ZMQ.context(1);
@@ -85,7 +85,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         publish.connect();
         subscribe = new Subscribe(context, "tcp://localhost:5001");
 //		subscribe.setReceivedTimeout(2000);
-        sink = new Sink(subscribe, serviceID.toString());
+        sink = new Sink(subscribe, serviceId.toString());
         sink.connect();
         Thread.sleep(1000);
         System.out.println("ready");
@@ -122,7 +122,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
         Path brokerPath = Paths.get(System.getProperty("broker"));
         Path servicesJar = Paths.get(System.getProperty("services.jar"));
-        for (ServiceID service : Arrays.asList(JavaServices.JAVA_TOKENIZER)) {
+        for (ServiceId service : Arrays.asList(JavaServices.JAVA_TOKENIZER)) {
             Path csvOutput = csvOutputDir.resolve(service.toString() + ".csv");
             ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-tokenizer", "-javaccparser", "-outline");
             bench.runBenchmark(corpus, csvOutput, 10, 20);
