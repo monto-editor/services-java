@@ -13,7 +13,6 @@ import monto.service.dependency.RegisterDynamicDependencies;
 import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
-import monto.service.region.IRegion;
 import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
@@ -51,53 +50,43 @@ public class JavaDynamicCodeCompletion extends MontoService {
         SourceMessage source = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
-        if (source.getSelection().isPresent()) {
-            ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
-                    .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
-            ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
-                    .orElseThrow(() -> new IllegalArgumentException("No Tokens message in request"));
+        ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
+                .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
+        ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
+                .orElseThrow(() -> new IllegalArgumentException("No Tokens message in request"));
 
-            AST ast = GsonMonto.fromJson(astMessage, AST.class);
+        AST ast = GsonMonto.fromJson(astMessage, AST.class);
 
-            Set<Source> requiredSources = new HashSet<>();
-            Set<DynamicDependency> dynDeps = findDynamicDependencies(tokens, source, requiredSources);
+        Set<Source> requiredSources = new HashSet<>();
+        Set<DynamicDependency> dynDeps = findDynamicDependencies(tokens, source, requiredSources);
 
-            sendMissingRequirements(source, dynDeps);
+        sendMissingRequirements(source, dynDeps);
 
-            List<Tuple> msgs = getDynamicDependencyMessages(request, requiredSources);
-            msgs.add(new Tuple(ast, source));
+        List<Tuple> msgs = getDynamicDependencyMessages(request, requiredSources);
+        msgs.add(new Tuple(ast, source));
 
-            List<AST> selectedPath = selectedPath(ast, source.getSelection().get());
-            if (selectedPath.size() > 0 && last(selectedPath) instanceof Terminal) {
-                String toBeCompleted = extract(source.getContents(), last(selectedPath));
 
-                List<Completion> relevantCompletions = new ArrayList<>();
-                for (Tuple msg : msgs) {
-                    relevantCompletions.addAll(
-                            allCompletions(msg.src.getContents(), msg.ast)
-                                    .stream()
-                                    .filter(comp -> comp.getReplacement().startsWith(toBeCompleted))
-                                    .map(comp -> new Completion(
-                                            msg.src.getSource() + " - " + comp.getDescription() + ": " + comp.getReplacement(),
-                                            comp.getReplacement(),
-                                            source.getSelection().get().getStartOffset(),
-                                            null))
-                                    .collect(Collectors.toList()));
-                }
-                System.out.printf("Relevant: %s\n", relevantCompletions);
-
-                sendProductMessage(
-                        source.getId(),
-                        source.getSource(),
-                        Products.COMPLETIONS,
-                        Languages.JAVA,
-                        GsonMonto.toJsonTree(relevantCompletions)
-                );
-            }
-            throw new IllegalArgumentException(
-                    String.format("Last token in selection path is not a terminal: %s", selectedPath));
+        List<Completion> relevantCompletions = new ArrayList<>();
+        for (Tuple msg : msgs) {
+            relevantCompletions.addAll(
+                    allCompletions(msg.src.getContents(), msg.ast)
+                            .stream()
+                            .map(comp -> new Completion(
+                                    msg.src.getSource() + " - " + comp.getDescription() + ": " + comp.getReplacement(),
+                                    comp.getReplacement(),
+                                    0,
+                                    null))
+                            .collect(Collectors.toList()));
         }
-        throw new IllegalArgumentException("Code completion needs selection");
+        System.out.printf("Relevant: %s\n", relevantCompletions);
+
+        sendProductMessage(
+                source.getId(),
+                source.getSource(),
+                Products.COMPLETIONS,
+                Languages.JAVA,
+                GsonMonto.toJsonTree(relevantCompletions)
+        );
     }
 
     private Set<DynamicDependency> findDynamicDependencies(ProductMessage tokens, SourceMessage source, Set<Source> requiredSources) throws ParseException {
@@ -173,7 +162,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                     AST packageIdentifier = node.getChildren().get(1);
                     completions.add(new Completion(
                             "package",
-                            extract(content, packageIdentifier),
+                            packageIdentifier.extract(content),
                             getResource("package.png")));
                     break;
 
@@ -210,7 +199,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
                     .reduce((previous, current) -> current).get();
-            completions.add(new Completion(name, extract(content, structureIdent), icon));
+            completions.add(new Completion(name, structureIdent.extract(content), icon));
             node.getChildren().forEach(child -> child.accept(this));
         }
 
@@ -220,65 +209,13 @@ public class JavaDynamicCodeCompletion extends MontoService {
                     .stream()
                     .filter(ast -> ast instanceof Terminal)
                     .findFirst().get();
-            completions.add(new Completion(name, extract(content, ident), url));
+            completions.add(new Completion(name, ident.extract(content), url));
         }
 
 
         public List<Completion> getCompletions() {
             return completions;
         }
-    }
-
-    private static List<AST> selectedPath(AST root, Selection sel) {
-        SelectedPath finder = new SelectedPath(sel);
-        root.accept(finder);
-        return finder.getSelected();
-    }
-
-    private static class SelectedPath implements ASTVisitor {
-
-        private Selection selection;
-        private List<AST> selectedPath = new ArrayList<>();
-
-        public SelectedPath(Selection selection) {
-            this.selection = selection;
-        }
-
-        @Override
-        public void visit(NonTerminal node) {
-            if (selection.inRange(node) || rightBehind(selection, node))
-                selectedPath.add(node);
-            node.getChildren()
-                    .stream()
-                    .filter(child -> selection.inRange(child) || rightBehind(selection, child))
-                    .forEach(child -> child.accept(this));
-        }
-
-        @Override
-        public void visit(Terminal token) {
-            if (rightBehind(selection, token))
-                selectedPath.add(token);
-        }
-
-        public List<AST> getSelected() {
-            return selectedPath;
-        }
-
-        private static boolean rightBehind(IRegion region1, IRegion region2) {
-            try {
-                return region1.getStartOffset() <= region2.getEndOffset() && region1.getStartOffset() >= region2.getStartOffset();
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
-
-    private static String extract(String str, AST indent) {
-        return str.substring(indent.getStartOffset(), indent.getStartOffset() + indent.getLength());
-    }
-
-    private static <A> A last(List<A> list) {
-        return list.get(list.size() - 1);
     }
 
     private class Tuple {
