@@ -65,11 +65,11 @@ public class JavaIdentifierFinder extends MontoService {
 
     @Override
     public void onConfigurationMessage(Configuration message) throws Exception {
-        for (Setting setting : message.getConfigurations()) {
-            if (setting.getOptionID().equals(OPTION_ID_FILTER_OUT_KEYWORDS)) {
+        for (Setting setting : message.getSettings()) {
+            if (setting.getOptionId().equals(OPTION_ID_FILTER_OUT_KEYWORDS)) {
                 filterOutKeywords = (boolean) setting.getValue();
             }
-            if (setting.getOptionID().equals(OPTION_ID_SORT_IDENTIFIERS)) {
+            if (setting.getOptionId().equals(OPTION_ID_SORT_IDENTIFIERS)) {
                 sortIdentifiersAlphabetically = (boolean) setting.getValue();
             }
         }
