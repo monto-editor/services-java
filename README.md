@@ -1,16 +1,20 @@
 Java Service for the Monto broker
 =================================
 
-Running the service
--------------------
+Building
+--------
+This repository depends on [services-base-java](https://github.com/monto-editor/services-base-java). Dependency are managed with Gradle. You will need our [Gradle multi-project](https://github.com/monto-editor/services-gradle) to build it successfully. Follow the instruction there.
 
-Start services with with `./start.sh`
+After setting it up, you can build a jar with `./gradlew :services-java:jar`. The jar will be put under `services-java/build/libs/services-java.jar`.
 
-Options
+Running
 -------
-* -t run the tokenizer
-* -p run the parser
-* -o run the outliner
-* -c run the code completioner
-* -address run services on given address, for example `tcp://*`
-* -registration register on given address, for example `tcp://*:5004`
+Start services with `./start.sh`.
+
+CLI Options
+-----------
+See [JavaServices.java](src/monto/service/java8/JavaServices.java).
+
+Developing
+----------
+Out of the box supported IDEs are Eclipse (with the Gradle Buildship Plug-in) and IntelliJ. Follow the instruction at [services-gradle](https://github.com/monto-editor/services-gradle).
