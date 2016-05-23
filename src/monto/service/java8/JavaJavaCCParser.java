@@ -40,7 +40,7 @@ public class JavaJavaCCParser extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws IOException {
+    public void onRequest(Request request) throws IOException {
         SourceMessage sourceMessage = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
 
@@ -58,7 +58,7 @@ public class JavaJavaCCParser extends MontoService {
         }
         long end = System.nanoTime();
 
-        return productMessage(
+        sendProductMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
                 Products.AST,

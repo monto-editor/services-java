@@ -34,7 +34,7 @@ public class JavaCodeCompletion extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) {
+    public void onRequest(Request request) {
         long start = System.nanoTime();
 
         SourceMessage sourceMessage = request.getSourceMessage()
@@ -60,7 +60,7 @@ public class JavaCodeCompletion extends MontoService {
 
         long end = System.nanoTime();
 
-        return productMessage(
+        sendProductMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
                 Products.COMPLETIONS,

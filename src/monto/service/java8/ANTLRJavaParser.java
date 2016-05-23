@@ -46,7 +46,7 @@ public class ANTLRJavaParser extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws IOException {
+    public void onRequest(Request request) throws IOException {
         SourceMessage version = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
         lexer.reset();
@@ -59,7 +59,7 @@ public class ANTLRJavaParser extends MontoService {
         Converter converter = new Converter();
         walker.walk(converter, root);
 
-        return productMessage(
+        sendProductMessage(
                 version.getId(),
                 version.getSource(),
                 Products.AST,

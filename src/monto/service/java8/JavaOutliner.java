@@ -40,7 +40,7 @@ public class JavaOutliner extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws ParseException {
+    public void onRequest(Request request) throws ParseException {
         SourceMessage version = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
         ProductMessage ast = request.getProductMessage(Products.AST, Languages.JAVA)
@@ -61,7 +61,7 @@ public class JavaOutliner extends MontoService {
         }
         long end = System.nanoTime();
 
-        return productMessage(
+        sendProductMessage(
                 version.getId(),
                 version.getSource(),
                 Products.OUTLINE,

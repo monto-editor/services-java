@@ -4,7 +4,6 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.gson.GsonMonto;
 import monto.service.java8.antlr.Java8Lexer;
-import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
@@ -40,7 +39,7 @@ public class JavaTokenizer extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws IOException {
+    public void onRequest(Request request) throws IOException {
         SourceMessage version = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
 
@@ -49,7 +48,7 @@ public class JavaTokenizer extends MontoService {
         List<Token> tokens = lexer.getAllTokens().stream().map(token -> convertToken(token)).collect(Collectors.toList());
         long end = System.nanoTime();
 
-        return productMessage(
+        sendProductMessage(
                 version.getId(),
                 version.getSource(),
                 Products.TOKENS,

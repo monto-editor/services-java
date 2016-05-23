@@ -41,7 +41,7 @@ public class JavaFileDependencies extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws Exception {
+    public void onRequest(Request request) throws Exception {
         SourceMessage source = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
@@ -50,7 +50,7 @@ public class JavaFileDependencies extends MontoService {
 
         FileDependency deps = findFileDepenencies(tokens, source);
 
-        return productMessage(
+        sendProductMessage(
                 source.getId(),
                 source.getSource(),
                 Products.FILE_DEPENDENCIES,

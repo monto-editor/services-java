@@ -47,7 +47,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws IOException, ParseException {
+    public void onRequest(Request request) throws IOException, ParseException {
         SourceMessage source = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
@@ -86,7 +86,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 }
                 System.out.printf("Relevant: %s\n", relevantCompletions);
 
-                return productMessage(
+                sendProductMessage(
                         source.getId(),
                         source.getSource(),
                         Products.COMPLETIONS,

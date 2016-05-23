@@ -40,7 +40,7 @@ public class JavaFileGraph extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws Exception {
+    public void onRequest(Request request) throws Exception {
         SourceMessage source = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No Source message in request"));
 
@@ -51,7 +51,7 @@ public class JavaFileGraph extends MontoService {
         sendMissingRequirements(source, dynDeps);
         Set<FileDependency> msgs = getClassDependencyMessage(request, dynDeps);
 
-        return productMessage(
+        sendProductMessage(
                 source.getId(),
                 source.getSource(),
                 Products.FILE_GRAPH,

@@ -76,7 +76,7 @@ public class JavaIdentifierFinder extends MontoService {
     }
 
     @Override
-    public ProductMessage onRequest(Request request) throws Exception {
+    public void onRequest(Request request) throws Exception {
         SourceMessage sourceMessage = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No source message in request"));
         ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
@@ -109,7 +109,7 @@ public class JavaIdentifierFinder extends MontoService {
         long end = System.nanoTime();
 
 
-        return productMessage(
+        sendProductMessage(
                 sourceMessage.getId(),
                 sourceMessage.getSource(),
                 Products.IDENTIFIER,
