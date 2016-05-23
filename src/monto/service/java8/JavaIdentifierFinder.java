@@ -4,10 +4,10 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
-import monto.service.gson.GsonMonto;
 import monto.service.configuration.BooleanOption;
 import monto.service.configuration.Configuration;
 import monto.service.configuration.Setting;
+import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
@@ -84,10 +84,9 @@ public class JavaIdentifierFinder extends MontoService {
 
         long start = System.nanoTime();
 
-        ASTNode astRoot = GsonMonto.fromJson(astMessage, ASTNode.class);
 
         Collection<Identifier> identifiers;
-        if (astRoot.getName().equals("NotAvailable")) {
+        if (!astMessage.isAvailable()) {
             // fallback to source message
             identifiers = getCodewordsFromSourceMessage(sourceMessage);
             if (filterOutKeywords) {
@@ -96,6 +95,7 @@ public class JavaIdentifierFinder extends MontoService {
                         .collect(Collectors.toSet());
             }
         } else {
+            ASTNode astRoot = GsonMonto.fromJson(astMessage, ASTNode.class);
             identifiers = getIdentifiersFromAST(sourceMessage.getContents(), astRoot);
         }
         if (sortIdentifiersAlphabetically) {

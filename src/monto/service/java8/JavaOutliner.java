@@ -47,11 +47,11 @@ public class JavaOutliner extends MontoService {
                 .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
         long start = System.nanoTime();
-        ASTNode root = GsonMonto.fromJson(ast, ASTNode.class);
 
-        if (root.getName().equals("NotAvailable")) {
+        if (!ast.isAvailable()) {
             throw new IllegalArgumentException("Can't generate Outline with missing AST.");
         }
+        ASTNode root = GsonMonto.fromJson(ast, ASTNode.class);
 
         OutlineTrimmer trimmer = new OutlineTrimmer(version);
         try {

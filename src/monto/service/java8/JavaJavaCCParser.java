@@ -8,7 +8,6 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.gson.GsonMonto;
-import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
 import monto.service.region.Region;
@@ -43,28 +42,29 @@ public class JavaJavaCCParser extends MontoService {
     public void onRequest(Request request) throws IOException {
         SourceMessage sourceMessage = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No version message in request"));
+        long start = System.nanoTime();
 
         // Remove all tabs to correct source locations of JavaCC Parser
         String contents = sourceMessage.getContents().replaceAll("\\t", " ");
 
-        long start = System.nanoTime();
-        ASTNode convertedRoot;
         try {
             Node root = JavaParser.parse(new StringReader(contents), true);
-            convertedRoot = encode(offsets(sourceMessage.getContents()), root);
+            ASTNode convertedRoot = encode(offsets(sourceMessage.getContents()), root);
+            sendProductMessage(
+                    sourceMessage.getId(),
+                    sourceMessage.getSource(),
+                    Products.AST,
+                    Languages.JAVA,
+                    GsonMonto.toJsonTree(convertedRoot),
+                    System.nanoTime() - start);
         } catch (ParseException e) {
-            e.printStackTrace();
-            convertedRoot = new ASTNode("NotAvailable", 0, contents.length(), new ArrayList<>());
+            sendProductMessageNotAvailable(sourceMessage.getId(),
+                    sourceMessage.getSource(),
+                    Products.AST,
+                    Languages.JAVA,
+                    e,
+                    System.nanoTime() - start);
         }
-        long end = System.nanoTime();
-
-        sendProductMessage(
-                sourceMessage.getId(),
-                sourceMessage.getSource(),
-                Products.AST,
-                Languages.JAVA,
-                GsonMonto.toJsonTree(convertedRoot),
-                end - start);
     }
 
     private static int[] offsets(String document) {
