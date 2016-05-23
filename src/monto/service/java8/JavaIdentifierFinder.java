@@ -5,6 +5,9 @@ import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.ast.ASTNodeVisitor;
 import monto.service.gson.GsonMonto;
+import monto.service.configuration.BooleanOption;
+import monto.service.configuration.Configuration;
+import monto.service.configuration.Setting;
 import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
@@ -22,7 +25,9 @@ import java.util.stream.Collectors;
 
 public class JavaIdentifierFinder extends MontoService {
 
-    protected boolean filterOutKeywordsAndLitetalFromCodewords = true;
+    protected static final String OPTION_ID_FILTER_OUT_KEYWORDS = "filterOutKeywords";
+    protected static final String OPTION_ID_SORT_IDENTIFIERS = "sortIdentifiers";
+    protected boolean filterOutKeywords = true;
     protected boolean sortIdentifiersAlphabetically = true;
 
     public static final Set<String> JAVA_KEYWORDS_AND_LITERALS =
@@ -47,12 +52,27 @@ public class JavaIdentifierFinder extends MontoService {
                 "Tries to find identifiers from AST, but can also find codewords from source message, if AST is not available",
                 Languages.JAVA,
                 Products.IDENTIFIER,
-                options(),
+                options(
+                        new BooleanOption(OPTION_ID_FILTER_OUT_KEYWORDS, "Filter out Java Keywords and numeric literals from codewords, when AST is not available", true),
+                        new BooleanOption(OPTION_ID_SORT_IDENTIFIERS, "Sort identifiers alphabetically", false)
+                ),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
                         new ProductDependency(JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
                 )
         );
+    }
+
+    @Override
+    public void onConfigurationMessage(Configuration message) throws Exception {
+        for (Setting setting : message.getConfigurations()) {
+            if (setting.getOptionID().equals(OPTION_ID_FILTER_OUT_KEYWORDS)) {
+                filterOutKeywords = (boolean) setting.getValue();
+            }
+            if (setting.getOptionID().equals(OPTION_ID_SORT_IDENTIFIERS)) {
+                sortIdentifiersAlphabetically = (boolean) setting.getValue();
+            }
+        }
     }
 
     @Override
@@ -70,7 +90,7 @@ public class JavaIdentifierFinder extends MontoService {
         if (astRoot.getName().equals("NotAvailable")) {
             // fallback to source message
             identifiers = getCodewordsFromSourceMessage(sourceMessage);
-            if (filterOutKeywordsAndLitetalFromCodewords) {
+            if (filterOutKeywords) {
                 identifiers = identifiers.stream()
                         .filter(identifier -> !JAVA_KEYWORDS_AND_LITERALS.contains(identifier.getIdentifier()))
                         .collect(Collectors.toSet());
@@ -84,9 +104,7 @@ public class JavaIdentifierFinder extends MontoService {
                     .collect(Collectors.toList());
         }
 
-        if (debug) {
-            System.out.println(identifiers);
-        }
+//        System.out.println(identifiers);
 
         long end = System.nanoTime();
 
@@ -133,26 +151,26 @@ public class JavaIdentifierFinder extends MontoService {
                     } else {
                         rightMostImportRegion = importNameExpr;
                     }
-                    identifiers.add(new Identifier(extract(content, rightMostImportRegion), Identifier.IdentifierType.IMPORT));
+                    identifiers.add(new Identifier(extract(content, rightMostImportRegion), "import"));
                     break;
 
                 case "ClassDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(1)), Identifier.IdentifierType.CLASS));
+                    identifiers.add(new Identifier(extract(content, node.getChild(1)), "class"));
                     traverseChildren(node);
                     break;
 
                 case "EnumDeclaration":
                     String enumName = extract(content, node.getChild(1));
-                    identifiers.add(new Identifier(enumName, Identifier.IdentifierType.ENUM));
+                    identifiers.add(new Identifier(enumName, "enum"));
                     node.getChildren().stream()
                             .filter(identifier -> identifier.getName().equals("EnumConstantDeclaration"))
                             .forEach(identifier -> identifiers.add(
-                                    new Identifier(enumName + "." + extract(content, identifier), Identifier.IdentifierType.ENUM)
+                                    new Identifier(enumName + "." + extract(content, identifier), "enum")
                             ));
                     break;
 
                 case "InterfaceDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(1)), Identifier.IdentifierType.INTERFACE));
+                    identifiers.add(new Identifier(extract(content, node.getChild(1)), "interface"));
                     traverseChildren(node);
                     break;
 
@@ -164,13 +182,13 @@ public class JavaIdentifierFinder extends MontoService {
 
                 case "VariableDeclaratorId":
                     if (fieldDeclaration)
-                        identifiers.add(new Identifier(extract(content, node), Identifier.IdentifierType.FIELD));
+                        identifiers.add(new Identifier(extract(content, node), "field"));
                     else
-                        identifiers.add(new Identifier(extract(content, node), Identifier.IdentifierType.VARIABLE));
+                        identifiers.add(new Identifier(extract(content, node), "variable"));
                     break;
 
                 case "MethodDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(2)), Identifier.IdentifierType.METHOD));
+                    identifiers.add(new Identifier(extract(content, node.getChild(2)), "method"));
                     traverseChildren(node);
                     break;
 
@@ -234,7 +252,7 @@ public class JavaIdentifierFinder extends MontoService {
                 .collect(Collectors.toSet())
                 .stream()
                 // convert strings to Identifier objetcs
-                .map((String identifier) -> new Identifier(identifier, Identifier.IdentifierType.GENERIC))
+                .map((String identifier) -> new Identifier(identifier, "generic"))
                 .collect(Collectors.toSet());
     }
 }
