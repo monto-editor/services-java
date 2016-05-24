@@ -127,11 +127,11 @@ public class JavaIdentifierFinder extends MontoService {
 
     private class AllIdentifiers implements ASTNodeVisitor {
         private Set<Identifier> identifiers = new HashSet<>();
-        private String content;
+        private String sourceCode;
         private boolean fieldDeclaration = false;
 
-        public AllIdentifiers(String content) {
-            this.content = content;
+        public AllIdentifiers(String sourceCode) {
+            this.sourceCode = sourceCode;
         }
 
         @Override
@@ -151,26 +151,26 @@ public class JavaIdentifierFinder extends MontoService {
                     } else {
                         rightMostImportRegion = importNameExpr;
                     }
-                    identifiers.add(new Identifier(extract(content, rightMostImportRegion), "import"));
+                    identifiers.add(new Identifier(extract(sourceCode, rightMostImportRegion), "import"));
                     break;
 
                 case "ClassDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(1)), "class"));
+                    identifiers.add(new Identifier(extract(sourceCode, node.getChild(1)), "class"));
                     traverseChildren(node);
                     break;
 
                 case "EnumDeclaration":
-                    String enumName = extract(content, node.getChild(1));
+                    String enumName = extract(sourceCode, node.getChild(1));
                     identifiers.add(new Identifier(enumName, "enum"));
                     node.getChildren().stream()
                             .filter(identifier -> identifier.getName().equals("EnumConstantDeclaration"))
                             .forEach(identifier -> identifiers.add(
-                                    new Identifier(enumName + "." + extract(content, identifier), "enum")
+                                    new Identifier(enumName + "." + extract(sourceCode, identifier), "enum")
                             ));
                     break;
 
                 case "InterfaceDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(1)), "interface"));
+                    identifiers.add(new Identifier(extract(sourceCode, node.getChild(1)), "interface"));
                     traverseChildren(node);
                     break;
 
@@ -182,13 +182,13 @@ public class JavaIdentifierFinder extends MontoService {
 
                 case "VariableDeclaratorId":
                     if (fieldDeclaration)
-                        identifiers.add(new Identifier(extract(content, node), "field"));
+                        identifiers.add(new Identifier(extract(sourceCode, node), "field"));
                     else
-                        identifiers.add(new Identifier(extract(content, node), "variable"));
+                        identifiers.add(new Identifier(extract(sourceCode, node), "variable"));
                     break;
 
                 case "MethodDeclaration":
-                    identifiers.add(new Identifier(extract(content, node.getChild(2)), "method"));
+                    identifiers.add(new Identifier(extract(sourceCode, node.getChild(2)), "method"));
                     traverseChildren(node);
                     break;
 
