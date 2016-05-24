@@ -1,4 +1,4 @@
-///*
+/*
 sourceSets {
     main {
         java {
@@ -7,7 +7,7 @@ sourceSets {
         }
     }
 }
-//*/
+*/
 jar {
     manifest {
         attributes('Main-Class': 'monto.service.java8.JavaServices')
