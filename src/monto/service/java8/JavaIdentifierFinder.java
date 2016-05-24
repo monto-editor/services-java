@@ -119,8 +119,8 @@ public class JavaIdentifierFinder extends MontoService {
         );
     }
 
-    private Set<Identifier> getIdentifiersFromAST(String contents, ASTNode astRoot) throws ParseException {
-        AllIdentifiers completionVisitor = new AllIdentifiers(contents);
+    private Set<Identifier> getIdentifiersFromAST(String sourceCode, ASTNode astRoot) throws ParseException {
+        AllIdentifiers completionVisitor = new AllIdentifiers(sourceCode);
         astRoot.accept(completionVisitor);
         return completionVisitor.getIdentifiers();
     }
