@@ -1,3 +1,13 @@
+///*
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+            srcDir 'benchmarks'
+        }
+    }
+}
+//*/
 jar {
     manifest {
         attributes('Main-Class': 'monto.service.java8.JavaServices')

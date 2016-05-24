@@ -1,7 +1,7 @@
 package monto.connection;
 
+import monto.service.gson.GsonMonto;
 import monto.service.product.ProductMessage;
-import monto.service.product.ProductMessages;
 
 import java.util.Optional;
 
@@ -23,7 +23,7 @@ public class Sink {
         return connection.receiveMessage()
                 .flatMap(msg -> {
                     try {
-                        return Optional.of((ProductMessage) ProductMessages.decode(msg));
+                        return Optional.of(GsonMonto.fromJson(msg, ProductMessage.class));
                     } catch (Exception e) {
                         return Optional.empty();
                     }

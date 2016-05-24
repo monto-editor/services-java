@@ -38,7 +38,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         this.servicesPath = servicesPath;
         this.serviceId = serviceId;
         this.modes = Arrays.asList(modes);
-        this.filetype = "*.java";
+        this.fileType = "java";
         this.context = ZMQ.context(1);
     }
 
@@ -52,6 +52,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
                 "--registration", "tcp://*:5004",
                 "--discovery", "tcp://*:5005",
                 "--config", "tcp://*:5007",
+                "--dyndep", "tcp://*:5009",
                 "--topic", "[ServiceID]",
                 "--servicesFrom", "Port 5010",
                 "--servicesTo", "Port 5025")
@@ -84,7 +85,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         publish = new PublishSource(new Publish(context, "tcp://localhost:5000"));
         publish.connect();
         subscribe = new Subscribe(context, "tcp://localhost:5001");
-//		subscribe.setReceivedTimeout(2000);
+//        subscribe.setReceivedTimeout(2000);
         sink = new Sink(subscribe, serviceId.toString());
         sink.connect();
         Thread.sleep(1000);
@@ -101,7 +102,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
             broker.waitFor();
             publish.close();
             sink.close();
-//			context.close();
+//            context.close();
         } catch (Throwable e) {
             System.err.println(e);
         }
@@ -122,10 +123,10 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
         Path brokerPath = Paths.get(System.getProperty("broker"));
         Path servicesJar = Paths.get(System.getProperty("services.jar"));
-        for (ServiceId service : Arrays.asList(JavaServices.JAVA_TOKENIZER)) {
+        for (ServiceId service : Arrays.asList(JavaServices.JAVA_TOKENIZER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
             Path csvOutput = csvOutputDir.resolve(service.toString() + ".csv");
             ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-tokenizer", "-javaccparser", "-outline");
-            bench.runBenchmark(corpus, csvOutput, 10, 20);
+            bench.runBenchmark(corpus, csvOutput, 10, 20, 3);
         }
     }
 }

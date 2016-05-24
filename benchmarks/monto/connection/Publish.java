@@ -17,7 +17,7 @@ public class Publish {
 
     private void setupConnection() {
         socket = ctx.socket(ZMQ.PUB);
-        socket.setLinger(Time.seconds(2));
+        socket.setLinger(2000); // 2 seconds
     }
 
     public void connect() {

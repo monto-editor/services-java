@@ -1,8 +1,7 @@
 package monto.connection;
 
+import monto.service.gson.GsonMonto;
 import monto.service.source.SourceMessage;
-import monto.service.source.SourceMessages;
-import org.json.simple.JSONObject;
 
 public class PublishSource {
     private Publish connection;
@@ -17,8 +16,7 @@ public class PublishSource {
 
     public void sendMessage(SourceMessage message) {
         try {
-            JSONObject encoding = SourceMessages.encode(message);
-            connection.sendMessage(encoding.toJSONString());
+            connection.sendMessage(GsonMonto.toJson(message));
         } catch (Exception e) {
             System.err.print(e);
         }
