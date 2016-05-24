@@ -212,7 +212,6 @@ public class JavaIdentifierFinder extends MontoService {
         return str.subSequence(indent.getStartOffset(), indent.getStartOffset() + indent.getLength()).toString();
     }
 
-
     private Set<Identifier> getCodewordsFromSourceMessage(SourceMessage sourceMessage) {
         String content = sourceMessage.getContents();
         // cleanup source code by removing elements, that are not identifiers
@@ -222,24 +221,10 @@ public class JavaIdentifierFinder extends MontoService {
         // [\S\s] is almost the same as ., except that it matches newlines too ([\W\w] or [\D\d] work too)
         // +? makes + ungreedy (doesn't match until last found instance, but next found instance (same for *?)
 
-        /** first attempt: exclude everything unwanted */
-        // remaining / not solved problem: digits in identifiers get cut out
-//        // remove strings, chars, digits (including scientific notation) and these symbols: ,+-*/%|&!;()[]{}=?:
-//        content = content.replaceAll("(\".*\"|'.*'|[eE]\\d+|[\\d,+\\-*/%\\|&!;()\\[\\]\\{\\}=:?])", "");
-//        content = content.replaceAll("[<>]", " ");
-//        // replace all whitespaces (includes newline), dots, < and > with only one space
-//        content = content.replaceAll("[<>\\s.]+", " ");
-//        // create non-duplicate set of identifiers by splitting at space
-//        String[] identifiers = content.split(" ");
-//        HashSet<String> identifierSet = new HashSet<>(Arrays.asList(identifiers));
-        /** end first attempt */
-
-        /** second attempt: only alphanumerics */
         // remove strings and chars
         content = content.replaceAll("(\".*\"|'.*')", "");
         // replace everything non alphanumeric with one space
         content = content.replaceAll("\\W+", " ");
-        /** end second attempt */
 
         // split at whitespaces
         return Arrays.stream(content.split("\\s+"))
