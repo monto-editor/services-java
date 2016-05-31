@@ -7,6 +7,8 @@ import monto.service.ast.ASTNodeVisitor;
 import monto.service.configuration.BooleanOption;
 import monto.service.configuration.Configuration;
 import monto.service.configuration.Setting;
+import monto.service.dependency.DynamicDependency;
+import monto.service.dependency.RegisterDynamicDependencies;
 import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
@@ -19,6 +21,8 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
+import monto.service.types.Product;
+import monto.service.types.Source;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,26 +81,55 @@ public class JavaIdentifierFinder extends MontoService {
 
     @Override
     public void onRequest(Request request) throws Exception {
-        SourceMessage sourceMessage = request.getSourceMessage()
+        // TODO how to make sure, mainSourceMessage is the correct SourceMessage? 
+        SourceMessage mainSourceMessage = request.getSourceMessage()
                 .orElseThrow(() -> new IllegalArgumentException("No source message in request"));
-        ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
+        ProductMessage mainAstMessage = request.getProductMessage(mainSourceMessage.getSource(), Products.AST, Languages.JAVA)
                 .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
         long start = System.nanoTime();
 
-
         Collection<Identifier> identifiers;
-        if (!astMessage.isAvailable()) {
+        if (!mainAstMessage.isAvailable()) {
             // fallback to source message
-            identifiers = getCodewordsFromSourceMessage(sourceMessage);
+            identifiers = getCodewordsFromSourceMessage(mainSourceMessage);
             if (filterOutKeywords) {
                 identifiers = identifiers.stream()
                         .filter(identifier -> !JAVA_KEYWORDS_AND_LITERALS.contains(identifier.getIdentifier()))
                         .collect(Collectors.toSet());
             }
         } else {
-            ASTNode astRoot = GsonMonto.fromJson(astMessage, ASTNode.class);
-            identifiers = getIdentifiersFromAST(sourceMessage.getContents(), astRoot);
+            String mainSourceCode = mainSourceMessage.getContents();
+            ASTNode mainAstRoot = GsonMonto.fromJson(mainAstMessage, ASTNode.class);
+            Set<String> importedFiles = getImportedFiles(mainSourceCode, mainAstRoot);
+
+            if (containsAllAstAndSourceMessageProducts(request, importedFiles)) {
+                // find identifiers from main and all imported files
+                identifiers = getIdentifiersFromAST(mainSourceCode, mainAstRoot);
+                for (String importedFile : importedFiles) {
+                    String importedSourceCode = request.getSourceMessage(new Source(importedFile)).get().getContents();
+                    ASTNode importedAstRoot = GsonMonto.fromJson(request.getProductMessage(new Source(importedFile), Products.AST, Languages.JAVA).get().getContents(), ASTNode.class);
+                    identifiers.addAll(getIdentifiersFromAST(importedSourceCode, importedAstRoot));
+                }
+            } else {
+                // re-request all source messages and ASTs for imported files
+                Set<DynamicDependency> astDependencies = importedFiles.stream().map(importedFile ->
+                        new DynamicDependency(new Source(importedFile), JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
+                ).collect(Collectors.toSet());
+                Set<DynamicDependency> sourceDependencies = importedFiles.stream().map(importedFile ->
+                        DynamicDependency.sourceDependency(new Source(importedFile), Languages.JAVA)
+                ).collect(Collectors.toSet());
+
+                Set<DynamicDependency> allDynDeps = new HashSet<>();
+                allDynDeps.addAll(astDependencies);
+                allDynDeps.addAll(sourceDependencies);
+
+                RegisterDynamicDependencies dynamicDependencies =
+                        new RegisterDynamicDependencies(request.getSource(), getServiceId(), allDynDeps);
+                System.out.println("requesting " + dynamicDependencies);
+                registerDynamicDependencies(dynamicDependencies);
+                return;
+            }
         }
         if (sortIdentifiersAlphabetically) {
             identifiers = identifiers.stream()
@@ -110,13 +143,38 @@ public class JavaIdentifierFinder extends MontoService {
 
 
         sendProductMessage(
-                sourceMessage.getId(),
-                sourceMessage.getSource(),
+                mainSourceMessage.getId(),
+                mainSourceMessage.getSource(),
                 Products.IDENTIFIER,
                 Languages.JAVA,
                 GsonMonto.toJsonTree(identifiers),
-                astMessage.getTime() + end - start
+                mainAstMessage.getTime() + end - start // TODO incorporate DynDep AST messages
         );
+    }
+
+    private Set<String> getImportedFiles(String sourceCode, ASTNode root) {
+        Set<String> imports = new HashSet<>();
+        // root is always a CompilationUnit (?)
+        List<ASTNode> compilationUnitChildren = root.getChildren();
+        compilationUnitChildren.forEach(child -> child.accept(node -> {
+            switch (node.getName()) {
+                case "ImportDeclaration":
+                    // first child of ImportDeclaration is the namedExpr
+                    imports.add(getRightMostImportNameExpr(node.getChild(0)).extract(sourceCode) + ".java");
+                    break;
+            }
+        }));
+        return imports;
+    }
+
+    private boolean containsAllAstAndSourceMessageProducts(Request request, Set<String> importedFiles) {
+        for (String importedFile : importedFiles) {
+            if (!request.getProductMessage(new Source(importedFile), Products.AST, Languages.JAVA).isPresent() ||
+                    !request.getSourceMessage(new Source(importedFile)).isPresent()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Set<Identifier> getIdentifiersFromAST(String sourceCode, ASTNode astRoot) throws ParseException {
@@ -140,17 +198,7 @@ public class JavaIdentifierFinder extends MontoService {
 
                 case "ImportDeclaration":
                     ASTNode importNameExpr = node.getChild(0);
-                    IRegion rightMostImportRegion;
-                    if (importNameExpr.getChildren().size() > 0) {
-                        IRegion nextHigherRegion = importNameExpr.getChild(0);
-                        int lengthDiff = importNameExpr.getEndOffset() - nextHigherRegion.getEndOffset();
-                        // + 1 to exclude separating .
-                        // - 1 to exclude ;
-                        rightMostImportRegion = new Region(nextHigherRegion.getEndOffset() + 1, lengthDiff - 1);
-
-                    } else {
-                        rightMostImportRegion = importNameExpr;
-                    }
+                    IRegion rightMostImportRegion = getRightMostImportNameExpr(importNameExpr);
                     identifiers.add(new Identifier(rightMostImportRegion.extract(sourceCode), "import"));
                     break;
 
@@ -205,6 +253,19 @@ public class JavaIdentifierFinder extends MontoService {
 
         public Set<Identifier> getIdentifiers() {
             return identifiers;
+        }
+    }
+
+    private IRegion getRightMostImportNameExpr(ASTNode importNameExpr) {
+        if (importNameExpr.getChildren().size() > 0) {
+            IRegion nextHigherRegion = importNameExpr.getChild(0);
+            int lengthDiff = importNameExpr.getEndOffset() - nextHigherRegion.getEndOffset();
+            // + 1 to exclude separating .
+            // - 1 to exclude ;
+            return new Region(nextHigherRegion.getEndOffset() + 1, lengthDiff - 1);
+
+        } else {
+            return importNameExpr;
         }
     }
 
