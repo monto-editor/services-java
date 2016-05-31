@@ -14,9 +14,9 @@ outline$Service <- "Java Outliner"
 
 data <- rbind(tokenizer,parser,outline)
 
-filelengths <- read.csv("filelengths")
+filelengths <- read.csv("filelengths.csv")
 filelengths$file <- filelengths$filename
-
+# filelengths.csv was generated with cloc --csv --by-file <code-dir> --report-file=filelengths.csv
 data <- full_join(data, filelengths)
 
 # data$Service <- data[data$Service == "Java Outliner",]
