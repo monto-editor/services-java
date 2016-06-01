@@ -154,7 +154,7 @@ public class JavaIdentifierFinder extends MontoService {
 
     private Set<String> getImportedFiles(String sourceCode, ASTNode root) {
         Set<String> imports = new HashSet<>();
-        // root is always a CompilationUnit (?)
+        // root is always a CompilationUnit
         List<ASTNode> compilationUnitChildren = root.getChildren();
         compilationUnitChildren.forEach(child -> child.accept(node -> {
             switch (node.getName()) {
