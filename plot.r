@@ -1,7 +1,7 @@
 library('ggplot2')
 library('outliers')
 library('dplyr')
-library('tikzDevice')
+#library('tikzDevice')
 
 tokenizer <- read.csv("javaTokenizer.csv")
 tokenizer$Service <- "Java Highlighting"
@@ -50,7 +50,7 @@ p <- ggplot(data, aes(y=overall/1e6, x=lines, linetype=Service)) +
   theme(text = element_text(size=8),
         legend.position=c(.2, .7))
 ggsave(p,filename="roundtriploc.png")
-tikz(file="/Users/svenkeidel/Documents/monto/paper/roundtriploc.tex", width=3.2, height=2.5)
+#tikz(file="/Users/svenkeidel/Documents/monto/paper/roundtriploc.tex", width=3.2, height=2.5)
 print(p)
 dev.off()
 
