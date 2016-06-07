@@ -81,10 +81,9 @@ public class JavaIdentifierFinder extends MontoService {
 
     @Override
     public void onRequest(Request request) throws Exception {
-        // TODO how to make sure, mainSourceMessage is the correct SourceMessage? 
-        SourceMessage mainSourceMessage = request.getSourceMessage()
+        SourceMessage mainSourceMessage = request.getSourceMessage(request.getSource())
                 .orElseThrow(() -> new IllegalArgumentException("No source message in request"));
-        ProductMessage mainAstMessage = request.getProductMessage(mainSourceMessage.getSource(), Products.AST, Languages.JAVA)
+        ProductMessage mainAstMessage = request.getProductMessage(request.getSource(), Products.AST, Languages.JAVA)
                 .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
 
         long start = System.nanoTime();
