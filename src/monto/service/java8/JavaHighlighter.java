@@ -1,38 +1,60 @@
 package monto.service.java8;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
+import monto.service.configuration.BooleanOption;
+import monto.service.configuration.Configuration;
+import monto.service.configuration.NumberOption;
+import monto.service.configuration.NumberSetting;
+import monto.service.configuration.Option;
+import monto.service.configuration.OptionGroup;
+import monto.service.configuration.Setting;
 import monto.service.gson.GsonMonto;
+import monto.service.highlighting.Token;
+import monto.service.highlighting.TokenCategory;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.ColorTheme;
-import monto.service.token.FontStore;
-import monto.service.token.Token;
-import monto.service.token.TokenCategory;
 import monto.service.types.Languages;
+
 import org.antlr.v4.runtime.ANTLRInputStream;
+import org.apache.commons.lang3.text.WordUtils;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
-public class JavaTokenizer extends MontoService {
+@SuppressWarnings("rawtypes")
+public class JavaHighlighter extends MontoService {
 
     private Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
-    private FontStore fonts = new FontStore();
-    private ColorTheme theme = ColorTheme.solarized();
+    private static List<Option> options;
 
-    public JavaTokenizer(ZMQConfiguration zmqConfig) {
+    static {
+	options = new ArrayList<>();
+
+	for(TokenCategory cat : TokenCategory.values()) {
+		options.add(new OptionGroup(WordUtils.capitalize(cat.toString()),
+				new NumberOption(cat.toString()+"-red", "red", cat.getColor().getRed(), 0, 255),
+				new NumberOption(cat.toString()+"-green", "green", cat.getColor().getGreen(), 0, 255),
+				new NumberOption(cat.toString()+"-blue", "blue", cat.getColor().getBlue(), 0, 255),
+				new BooleanOption(cat.toString()+"-bold", "bold", false),
+				new BooleanOption(cat.toString()+"-italic", "italic", false)
+		));
+	}
+    }
+
+    public JavaHighlighter(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_TOKENIZER,
-                "Tokenizer",
-                "A tokenizer for Java that uses ANTLR for tokenizing",
+                JavaServices.JAVA_HIGHLIGHTER,
+                "Java Syntax Highlighter",
+                "A syntax highlighting service for Java that uses ANTLR for tokenizing",
                 Languages.JAVA,
                 Products.TOKENS,
-                options(),
+                options,
                 dependencies(
                         new SourceDependency(Languages.JAVA)
                 ));
@@ -56,6 +78,29 @@ public class JavaTokenizer extends MontoService {
                 GsonMonto.toJsonTree(tokens),
                 end - start
         );
+    }
+
+    @Override
+    public void onConfigurationMessage(Configuration message) throws Exception {
+	System.out.println("on configuration message: "+message);
+	for(Setting setting : message.getSettings()) {
+		String[] optionId = setting.getOptionId().split("-");
+		String category = optionId[0];
+		String option = optionId[1];
+		TokenCategory tokCat = TokenCategory.valueOf(category);
+		switch(option) {
+		case "red": tokCat.setColor(tokCat.getColor().setRed(colorValue(setting)));
+		case "green": tokCat.setColor(tokCat.getColor().setGreen(colorValue(setting)));
+		case "blue": tokCat.setColor(tokCat.getColor().setBlue(colorValue(setting)));
+		case "bold": tokCat.setStyle("bold");
+		case "italic": tokCat.setStyle("italic");
+		break;
+		}
+	}
+    }
+
+    public int colorValue(Setting setting) {
+	return ((NumberSetting) setting).getValue().intValue();
     }
 
     private Token convertToken(org.antlr.v4.runtime.Token token) {
@@ -239,7 +284,6 @@ public class JavaTokenizer extends MontoService {
 
         int offset = token.getStartIndex();
         int length = token.getStopIndex() - offset + 1;
-        return new Token(offset, length, category, fonts.getFont(category.getColor(theme)));
+        return new Token(offset, length, category.getFont());
     }
-
 }

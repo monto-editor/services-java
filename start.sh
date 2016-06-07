@@ -15,7 +15,7 @@ else
 fi
 
 java -jar "$jar" \
-     -tokenizer \
+     -highlighting \
      -javaccparser \
      -outline \
      -codecompletion \

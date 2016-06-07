@@ -1,6 +1,16 @@
 package monto.service.java8;
 
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.AST;
@@ -17,14 +27,9 @@ import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
-import monto.service.token.Token;
-import monto.service.token.TokenCategory;
-import monto.service.types.*;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Collectors;
+import monto.service.types.Languages;
+import monto.service.types.ParseException;
+import monto.service.types.Source;
 
 public class JavaDynamicCodeCompletion extends MontoService {
 
@@ -40,8 +45,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 options(),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_TOKENIZER, Products.TOKENS, Languages.JAVA)
+                        new ProductDependency(JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA)
                 ));
     }
 
@@ -52,13 +56,10 @@ public class JavaDynamicCodeCompletion extends MontoService {
 
         ProductMessage astMessage = request.getProductMessage(Products.AST, Languages.JAVA)
                 .orElseThrow(() -> new IllegalArgumentException("No AST message in request"));
-        ProductMessage tokens = request.getProductMessage(request.getSource(), Products.TOKENS, Languages.JAVA)
-                .orElseThrow(() -> new IllegalArgumentException("No Tokens message in request"));
-
         AST ast = GsonMonto.fromJson(astMessage, AST.class);
 
         Set<Source> requiredSources = new HashSet<>();
-        Set<DynamicDependency> dynDeps = findDynamicDependencies(tokens, source, requiredSources);
+        Set<DynamicDependency> dynDeps = findDynamicDependencies(source, requiredSources);
 
         sendMissingRequirements(source, dynDeps);
 
@@ -89,10 +90,13 @@ public class JavaDynamicCodeCompletion extends MontoService {
         );
     }
 
-    private Set<DynamicDependency> findDynamicDependencies(ProductMessage tokens, SourceMessage source, Set<Source> requiredSources) throws ParseException {
+    private Set<DynamicDependency> findDynamicDependencies(SourceMessage source, Set<Source> requiredSources) throws ParseException {
         Set<DynamicDependency> dynDeps = new HashSet<>();
         int begin = 0;
         boolean foundImport = false;
+
+        // FIXME find another way to extract to extract import modules rather than from token categories.
+        /*
         for (Token t : GsonMonto.fromJsonArray(tokens, Token[].class)) {
             if (foundImport && t.getCategory() == TokenCategory.DELIMITER && source.getContents().substring(t.getStartOffset(), t.getEndOffset()).equals(";")) {
                 String str = source.getContents().substring(begin + 1, t.getStartOffset()).replace(".", "/").trim() + ".java";
@@ -109,6 +113,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 begin = t.getEndOffset();
             }
         }
+        */
         return dynDeps;
     }
 

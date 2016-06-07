@@ -4,12 +4,14 @@ import monto.connection.Publish;
 import monto.connection.PublishSource;
 import monto.connection.Sink;
 import monto.connection.Subscribe;
+import monto.service.benchmark.Benchmark;
 import monto.service.java8.JavaServices;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
 import monto.service.types.ServiceId;
 import monto.service.types.Source;
+
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
@@ -78,7 +80,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         command.add("tcp://*:5009");
         services = new ProcessBuilder(command)
                 .redirectOutput(new File("services.stdout"))
-                .redirectError(new File("services.stderr"))
+               .redirectError(new File("services.stderr"))
                 .start();
         Thread.sleep(1000);
         System.out.println("setup connection");
@@ -123,7 +125,7 @@ public class ServiceIntegrationBenchmark extends Benchmark {
         Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
         Path brokerPath = Paths.get(System.getProperty("broker"));
         Path servicesJar = Paths.get(System.getProperty("services.jar"));
-        for (ServiceId service : Arrays.asList(JavaServices.JAVA_TOKENIZER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
+        for (ServiceId service : Arrays.asList(JavaServices.JAVA_HIGHLIGHTER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
             Path csvOutput = csvOutputDir.resolve(service.toString() + ".csv");
             ServiceIntegrationBenchmark bench = new ServiceIntegrationBenchmark(brokerPath, servicesJar, service, "-tokenizer", "-javaccparser", "-outline");
             bench.runBenchmark(corpus, csvOutput, 10, 20, 3);

@@ -15,7 +15,7 @@ import java.util.List;
 
 public class JavaServices {
 
-    public static final ServiceId JAVA_TOKENIZER = new ServiceId("javaTokenizer");
+    public static final ServiceId JAVA_HIGHLIGHTER = new ServiceId("javaHighlighter");
     public static final ServiceId JAVA_ANTLR_PARSER = new ServiceId("javaAntlrParser");
     public static final ServiceId JAVA_JAVACC_PARSER = new ServiceId("javaJavaCCParser");
     public static final ServiceId JAVA_OUTLINER = new ServiceId("javaOutliner");
@@ -47,13 +47,12 @@ public class JavaServices {
         });
 
         Options options = new Options();
-        options.addOption("tokenizer", false, "enable Java tokenizer")
+        options.addOption("highlighting", false, "enable Java Syntax Highlighting")
                 .addOption("antlrparser", false, "enable Java ANTLR parser")
                 .addOption("javaccparser", false, "enable JavaCC parser")
                 .addOption("outline", false, "enable Java outliner")
                 .addOption("codecompletion", false, "enable Java code completioner")
                 .addOption("dynamiccodecompletion", false, "enable Java dynamic code completioner")
-                .addOption("filedependencies", false, "enable Java file dependencies")
                 .addOption("address", true, "address of services")
                 .addOption("registration", true, "address of broker registration")
                 .addOption("configuration", true, "address of configuration messages")
@@ -75,8 +74,8 @@ public class JavaServices {
         resourceServer = new ResourceServer(JavaServices.class.getResource("/icons").toExternalForm(), zmqConfig.getResourcePort());
         resourceServer.start();
 
-        if (cmd.hasOption("tokenizer")) {
-            services.add(new JavaTokenizer(zmqConfig));
+        if (cmd.hasOption("highlighting")) {
+            services.add(new JavaHighlighter(zmqConfig));
         }
         if (cmd.hasOption("javaccparser")) {
             services.add(new JavaJavaCCParser(zmqConfig));
@@ -93,10 +92,6 @@ public class JavaServices {
         }
         if (cmd.hasOption("dynamiccodecompletion")) {
             services.add(new JavaDynamicCodeCompletion(zmqConfig));
-        }
-        if (cmd.hasOption("filedependencies")) {
-            services.add(new JavaFileDependencies(zmqConfig));
-            services.add(new JavaFileGraph(zmqConfig));
         }
         if (cmd.hasOption("debug")) {
             for (MontoService service : services)
