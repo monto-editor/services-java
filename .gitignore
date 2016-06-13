@@ -5,3 +5,6 @@
 /shared/build/
 /main/build/
 /benchmarks/build/
+/shared/bin/
+/main/bin/
+/benchmarks/bin/
