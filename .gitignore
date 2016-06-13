@@ -2,9 +2,6 @@
 !gradle-wrapper.jar
 /.gradle/
 /.idea/
-/bin/
-/build/
-/src/build/
+/shared/build/
 /main/build/
 /benchmarks/build/
-/dist/
