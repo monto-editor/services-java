@@ -4,4 +4,7 @@
 /.idea/
 /bin/
 /build/
+/src/build/
+/main/build/
+/benchmarks/build/
 /dist/

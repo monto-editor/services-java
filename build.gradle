@@ -1,34 +1,82 @@
-plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
+
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+  }
 }
 
-group = "monto"
+allprojects {
 
-sourceCompatibility = 1.8
+  apply plugin: 'java'
+  apply plugin: 'com.github.johnrengelman.shadow'
 
-repositories {
+  group = "monto"
+
+  sourceCompatibility = 1.8
+
+  repositories {
     mavenCentral()
+  }
 }
 
-sourceSets {
+project(':src') {
+  sourceSets {
     main {
-        java {
-            srcDir 'src'
-            srcDir 'benchmarks'
-        }
+      java {
+        srcDir 'src'
+      }
     }
-}
+  }
 
-jar {
-    manifest {
-        attributes('Main-Class': 'monto.service.java8.JavaServices')
-    }
-}
-
-dependencies {
+  dependencies {
     compile project(':services-base-java')
     compile 'org.antlr:antlr4-runtime:4.5.3'
     compile 'commons-cli:commons-cli:1.3.1'
     compile 'com.github.javaparser:javaparser-core:2.3.0'
+  }
+}
+
+project(':main') {
+  sourceSets {
+    main {
+      java {
+        srcDir 'main'
+      }
+    }
+  }
+
+  jar {
+    manifest {
+      attributes('Main-Class': 'monto.service.java8.JavaServices')
+    }
+  }
+
+  dependencies {
+    compile project(':src')
+  }
+}
+
+project(':benchmarks') {
+  sourceSets {
+    main {
+      java {
+        srcDir 'benchmarks'
+      }
+    }
+  }
+
+  jar {
+    manifest {
+      attributes('Main-Class': 'monto.service.benchmark.IntegrationBenchmark')
+    }
+  }
+
+  dependencies {
+    compile project(':src')
+  }
 }

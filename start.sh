@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 eclipse_jar="$DIR/dist/services-java.jar"
-gradle_jar="$DIR/build/libs/services-java-all.jar"
+gradle_jar="$DIR/main/build/libs/main-all.jar"
 
 if [ -f "$eclipse_jar" ]; then
     jar="$eclipse_jar"

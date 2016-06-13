@@ -1,2 +1,2 @@
-include ':services-base-java'
+include 'src', 'main', 'benchmarks', ':services-base-java'
 project(':services-base-java').projectDir = new File(settingsDir, '../services-base-java')
