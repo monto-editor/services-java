@@ -116,7 +116,7 @@ public class IntegrationBenchmark extends Benchmark {
         Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
         Path brokerPath = Paths.get(System.getProperty("broker"));
         Path servicesJar = Paths.get(System.getProperty("services.jar"));
-        for (ServiceId service : Arrays.asList(JavaServices.JAVA_HIGHLIGHTER, JavaServices.JAVA_JAVACC_PARSER, JavaServices.JAVA_OUTLINER)) {
+        for (ServiceId service : Arrays.asList(JavaServices.HIGHLIGHTER, JavaServices.JAVACC_PARSER, JavaServices.OUTLINER)) {
             Path csvOutput = csvOutputDir.resolve(service.toString() + ".csv");
             IntegrationBenchmark bench = new IntegrationBenchmark(brokerPath, servicesJar, service, "-highlighter", "-javaccparser", "-outline");
             bench.runBenchmark(corpus, csvOutput, 10, 20, 3);

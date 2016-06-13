@@ -27,7 +27,7 @@ public class JavaJavaCCParser extends MontoService {
 
     public JavaJavaCCParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_JAVACC_PARSER,
+                JavaServices.JAVACC_PARSER,
                 "JavaCC Parser",
                 "A parser that produces an AST for Java using JavaCC",
                 Languages.JAVA,

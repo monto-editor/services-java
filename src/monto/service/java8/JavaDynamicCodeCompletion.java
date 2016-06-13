@@ -37,7 +37,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
 
     public JavaDynamicCodeCompletion(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_CODE_COMPLETION,
+                JavaServices.CODE_COMPLETION,
                 "Dynamic Code Completion",
                 "A code completion service for Java with file dependencies",
                 Languages.JAVA,
@@ -45,7 +45,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
                 options(),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_ANTLR_PARSER, Products.AST, Languages.JAVA)
+                        new ProductDependency(JavaServices.ANTLR_PARSER, Products.AST, Languages.JAVA)
                 ));
     }
 
@@ -134,7 +134,7 @@ public class JavaDynamicCodeCompletion extends MontoService {
     private void sendMissingRequirements(SourceMessage source, Set<DynamicDependency> dynDeps) {
         RegisterDynamicDependencies regDynDep = new RegisterDynamicDependencies(
                 source.getSource(),
-                JavaServices.JAVA_CODE_COMPLETION,
+                JavaServices.CODE_COMPLETION,
                 dynDeps
         );
         if (!regDynDep.equals(registerDynamicDependencies.get(source.getSource()))) {

@@ -1,28 +1,19 @@
 package monto.service.java8;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.resources.ResourceServer;
-import monto.service.types.ServiceId;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.zeromq.ZContext;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class JavaServices {
-
-    public static final ServiceId JAVA_HIGHLIGHTER = new ServiceId("javaHighlighter");
-    public static final ServiceId JAVA_ANTLR_PARSER = new ServiceId("javaAntlrParser");
-    public static final ServiceId JAVA_JAVACC_PARSER = new ServiceId("javaJavaCCParser");
-    public static final ServiceId JAVA_OUTLINER = new ServiceId("javaOutliner");
-    public static final ServiceId JAVA_CODE_COMPLETION = new ServiceId("javaCodeCompletion");
-    public static final ServiceId JAVA_FILE_DEPENDENCIES = new ServiceId("javaFileDependencies");
-    public static final ServiceId JAVA_FILE_GRAPH = new ServiceId("javaFileGraph");
-    public static final ServiceId JAVA_IDENTIFIER_FINDER = new ServiceId("javaIdentifierFinder");
+public class Main {
 
     private static ResourceServer resourceServer;
 
@@ -67,7 +58,7 @@ public class JavaServices {
                 cmd.getOptionValue("registration"),
                 Integer.parseInt(cmd.getOptionValue("resources")));
 
-        resourceServer = new ResourceServer(JavaServices.class.getResource("/icons").toExternalForm(), zmqConfig.getResourcePort());
+        resourceServer = new ResourceServer(Main.class.getResource("/icons").toExternalForm(), zmqConfig.getResourcePort());
         resourceServer.start();
 
         if (cmd.hasOption("highlighting")) {

@@ -21,7 +21,7 @@ public class JavaCodeCompletion extends MontoService {
 
     public JavaCodeCompletion(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_CODE_COMPLETION,
+                JavaServices.CODE_COMPLETION,
                 "Code Completion",
                 "A code completion service for Java",
                 Languages.JAVA,
@@ -29,7 +29,7 @@ public class JavaCodeCompletion extends MontoService {
                 options(),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_IDENTIFIER_FINDER, Products.IDENTIFIER, Languages.JAVA)
+                        new ProductDependency(JavaServices.IDENTIFIER_FINDER, Products.IDENTIFIER, Languages.JAVA)
                 ));
     }
 

@@ -49,7 +49,7 @@ public class JavaHighlighter extends MontoService {
 
     public JavaHighlighter(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_HIGHLIGHTER,
+                JavaServices.HIGHLIGHTER,
                 "Java Syntax Highlighter",
                 "A syntax highlighting service for Java that uses ANTLR for tokenizing",
                 Languages.JAVA,

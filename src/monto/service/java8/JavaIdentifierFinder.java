@@ -51,7 +51,7 @@ public class JavaIdentifierFinder extends MontoService {
 
     public JavaIdentifierFinder(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_IDENTIFIER_FINDER,
+                JavaServices.IDENTIFIER_FINDER,
                 "Identifier Finder",
                 "Tries to find identifiers from AST, but can also find codewords from source message, if AST is not available",
                 Languages.JAVA,
@@ -62,7 +62,7 @@ public class JavaIdentifierFinder extends MontoService {
                 ),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
+                        new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)
                 )
         );
     }
@@ -113,7 +113,7 @@ public class JavaIdentifierFinder extends MontoService {
             } else {
                 // re-request all source messages and ASTs for imported files
                 Set<DynamicDependency> astDependencies = importedFiles.stream().map(importedFile ->
-                        new DynamicDependency(new Source(importedFile), JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
+                        new DynamicDependency(new Source(importedFile), JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)
                 ).collect(Collectors.toSet());
                 Set<DynamicDependency> sourceDependencies = importedFiles.stream().map(importedFile ->
                         DynamicDependency.sourceDependency(new Source(importedFile), Languages.JAVA)

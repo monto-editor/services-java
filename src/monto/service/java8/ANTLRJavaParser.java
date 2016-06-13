@@ -1,17 +1,23 @@
 package monto.service.java8;
 
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
 import monto.service.gson.GsonMonto;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.java8.antlr.Java8Parser;
-import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
+
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -21,12 +27,6 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
 public class ANTLRJavaParser extends MontoService {
 
     Java8Lexer lexer = new Java8Lexer(new ANTLRInputStream());
@@ -34,7 +34,7 @@ public class ANTLRJavaParser extends MontoService {
 
     public ANTLRJavaParser(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_ANTLR_PARSER,
+                JavaServices.ANTLR_PARSER,
                 "ANTLR Parser",
                 "A parser that produces an AST for Java using ANTLR",
                 Languages.JAVA,

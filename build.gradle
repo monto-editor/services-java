@@ -25,13 +25,6 @@ allprojects {
 }
 
 project(':src') {
-  sourceSets {
-    main {
-      java {
-        srcDir 'src'
-      }
-    }
-  }
 
   dependencies {
     compile project(':services-base-java')
@@ -45,14 +38,14 @@ project(':main') {
   sourceSets {
     main {
       java {
-        srcDir 'main'
+        srcDir './'
       }
     }
   }
 
   jar {
     manifest {
-      attributes('Main-Class': 'monto.service.java8.JavaServices')
+      attributes('Main-Class': 'monto.service.java8.Main')
     }
   }
 
@@ -65,7 +58,7 @@ project(':benchmarks') {
   sourceSets {
     main {
       java {
-        srcDir 'benchmarks'
+        srcDir './'
       }
     }
   }

@@ -27,7 +27,7 @@ public class JavaOutliner extends MontoService {
 
     public JavaOutliner(ZMQConfiguration zmqConfig) {
         super(zmqConfig,
-                JavaServices.JAVA_OUTLINER,
+                JavaServices.OUTLINER,
                 "Outline",
                 "An outline service for Java",
                 Languages.JAVA,
@@ -35,7 +35,7 @@ public class JavaOutliner extends MontoService {
                 options(),
                 dependencies(
                         new SourceDependency(Languages.JAVA),
-                        new ProductDependency(JavaServices.JAVA_JAVACC_PARSER, Products.AST, Languages.JAVA)
+                        new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)
                 ));
     }
 
