@@ -3,7 +3,7 @@
 ## Building
 Builds and dependencies are managed with Gradle.
 
-`./gradlew shadowJar` builds an all-dependency-including fat jar (using [Shadow](https://github.com/johnrengelman/shadow)). The jar will be put under `build/libs/services-java-all.jar`.
+`./gradlew shadowJar` builds an jar that includes all dependencies (using [Shadow](https://github.com/johnrengelman/shadow)). The jar will be put under `build/libs/services-java-all.jar`.
 
 This repository depends on [services-base-java](https://github.com/monto-editor/services-base-java), which is referenced using [jitpack.io](https://jitpack.io/#monto-editor/services-base-java/master-SNAPSHOT).
 

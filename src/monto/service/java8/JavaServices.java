@@ -55,9 +55,7 @@ public class JavaServices {
                 .addOption("dynamiccodecompletion", false, "enable Java dynamic code completioner")
                 .addOption("address", true, "address of services")
                 .addOption("registration", true, "address of broker registration")
-                .addOption("configuration", true, "address of configuration messages")
                 .addOption("resources", true, "port for http resource server")
-                .addOption("dyndeps", true, "port for dynamic dependencies registrations")
                 .addOption("debug", false, "enable debugging output");
 
         CommandLineParser parser = new DefaultParser();
@@ -67,8 +65,6 @@ public class JavaServices {
                 context,
                 cmd.getOptionValue("address"),
                 cmd.getOptionValue("registration"),
-                cmd.getOptionValue("configuration"),
-                cmd.getOptionValue("dyndeps"),
                 Integer.parseInt(cmd.getOptionValue("resources")));
 
         resourceServer = new ResourceServer(JavaServices.class.getResource("/icons").toExternalForm(), zmqConfig.getResourcePort());

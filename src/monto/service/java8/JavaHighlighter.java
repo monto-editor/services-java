@@ -37,7 +37,7 @@ public class JavaHighlighter extends MontoService {
 	options = new ArrayList<>();
 
 	for(TokenCategory cat : TokenCategory.values()) {
-		options.add(new OptionGroup(WordUtils.capitalize(cat.toString()),
+		options.add(new OptionGroup(WordUtils.capitalize(cat.toString().toLowerCase()),
 				new NumberOption(cat.toString()+"-red", "red", cat.getColor().getRed(), 0, 255),
 				new NumberOption(cat.toString()+"-green", "green", cat.getColor().getGreen(), 0, 255),
 				new NumberOption(cat.toString()+"-blue", "blue", cat.getColor().getBlue(), 0, 255),

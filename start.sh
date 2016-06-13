@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 eclipse_jar="$DIR/dist/services-java.jar"
-gradle_jar="$DIR/build/libs/services-java.jar"
+gradle_jar="$DIR/build/libs/services-java-all.jar"
 
 if [ -f "$eclipse_jar" ]; then
     jar="$eclipse_jar"
@@ -20,7 +20,5 @@ java -jar "$jar" \
      -outline \
      -codecompletion \
      -address tcp://* \
-     -registration tcp://*:5004 \
-     -configuration tcp://*:5007 \
-     -dyndeps tcp://*:5009 \
+     -registration tcp://*:5002 \
      -resources 5050
