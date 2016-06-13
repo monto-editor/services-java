@@ -104,10 +104,10 @@ public class IntegrationBenchmark extends Benchmark {
         source.sendSource(srcMsg);
         while(true) {
 	        ProductMessage prod = sink.<ProductMessage,RuntimeException>receive(
-	        		p -> p,
-	        		disc -> { throw new RuntimeException("Unexpected discovery response"); });
+				p -> p,
+				disc -> { throw new RuntimeException("Unexpected discovery response"); });
 	        if(prod.getServiceId().equals(serviceId))
-	        	return prod.getTime();
+			return prod.getTime();
         }
     }
 
