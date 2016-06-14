@@ -2,9 +2,6 @@
 !gradle-wrapper.jar
 /.gradle/
 /.idea/
-/shared/build/
-/main/build/
-/benchmarks/build/
-/shared/bin/
-/main/bin/
-/benchmarks/bin/
+
+build/
+bin/
