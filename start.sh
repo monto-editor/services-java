@@ -9,7 +9,7 @@ if [ ! -f "$gradle_shadow_jar" ]; then
     exit 99
 fi
 
-java -jar "$jar" \
+java -jar "$gradle_shadow_jar" \
      -highlighting \
      -javaccparser \
      -outline \
