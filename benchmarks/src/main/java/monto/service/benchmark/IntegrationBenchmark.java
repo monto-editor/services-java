@@ -7,8 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import monto.ide.IDESource;
-import monto.ide.Sink;
+import monto.ide.SourceSocket;
+import monto.ide.SinkSocket;
+import monto.service.gson.MessageFromIde;
 import monto.service.java8.JavaServices;
 import monto.service.product.ProductMessage;
 import monto.service.source.SourceMessage;
@@ -29,8 +30,8 @@ public class IntegrationBenchmark extends Benchmark {
   private Process broker, services;
   private LongKey id = new LongKey(0);
   private Context context;
-  private IDESource source;
-  private Sink sink;
+  private SourceSocket source;
+  private SinkSocket sink;
 
   public IntegrationBenchmark(
       Path brokerPath, Path servicesPath, ServiceId serviceId, String... modes) {
@@ -81,9 +82,9 @@ public class IntegrationBenchmark extends Benchmark {
             .start();
     Thread.sleep(1000);
     System.out.println("setup connection");
-    source = new IDESource(context, "tcp://localhost:5000");
+    source = new SourceSocket(context, "tcp://localhost:5000");
     source.connect();
-    sink = new Sink(context, "tcp://localhost:5001");
+    sink = new SinkSocket(context, "tcp://localhost:5001");
     sink.connect();
     Thread.sleep(1000);
     System.out.println("ready");
@@ -109,7 +110,7 @@ public class IntegrationBenchmark extends Benchmark {
   protected long measure(Source src, String contents) throws Exception {
     SourceMessage srcMsg = new SourceMessage(id, src, Languages.JAVA, contents);
     id = id.freshId();
-    source.sendSource(srcMsg);
+    source.send(MessageFromIde.source(srcMsg));
     while (true) {
       ProductMessage prod =
           sink.<ProductMessage, RuntimeException>receive(
