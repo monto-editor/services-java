@@ -21,7 +21,6 @@ import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
-import monto.service.types.Product;
 import monto.service.types.Source;
 
 import java.util.*;
@@ -117,6 +116,7 @@ public class JavaIdentifierFinder extends MontoService {
             new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)));
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   public void onConfigurationMessage(Configuration message) throws Exception {
     for (Setting setting : message.getSettings()) {
