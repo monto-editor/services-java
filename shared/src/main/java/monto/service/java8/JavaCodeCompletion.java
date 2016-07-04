@@ -56,7 +56,7 @@ public class JavaCodeCompletion extends MontoService {
             .map(
                 identifier
                     -> new Completion(
-                        identifier.getType(),
+                        identifier.getIdentifier(),
                         identifier.getIdentifier(),
                         //sourceMessage.getSelection().get().getStartOffset(),
                         identifierTypeToIcon(identifier.getType())))
