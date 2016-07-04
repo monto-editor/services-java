@@ -89,7 +89,6 @@ public class JavaHighlighter extends MontoService {
 
   @Override
   public void onConfigurationMessage(Configuration message) throws Exception {
-    System.out.println("on configuration message: " + message);
     for (Setting setting : message.getSettings()) {
       String[] optionId = setting.getOptionId().split("-");
       String category = optionId[0];
