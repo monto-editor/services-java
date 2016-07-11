@@ -1,6 +1,5 @@
 package monto.service.java8;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -8,6 +7,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
@@ -81,36 +82,14 @@ public class JavaCodeCompletion extends MontoService {
         List<Identifier> identifiers = sourceMessageListPair.getRight();
 
         int cursorPosition = sourcePositionContent.getSelection().getStartOffset();
+
+        // Find last non alphanumerical character before cursor position
         String textBeforeCursor =
             new Region(0, cursorPosition).extract(sourceMessage.getContents());
-
-        int startOfCurrentWord =
-            NumberUtils.max(
-                0,
-                textBeforeCursor.lastIndexOf(' '),
-                textBeforeCursor.lastIndexOf('\t'),
-                textBeforeCursor.lastIndexOf('.'),
-                textBeforeCursor.lastIndexOf(','),
-                textBeforeCursor.lastIndexOf(':'),
-                textBeforeCursor.lastIndexOf(';'),
-                textBeforeCursor.lastIndexOf('"'),
-                textBeforeCursor.lastIndexOf('='),
-                textBeforeCursor.lastIndexOf('+'),
-                textBeforeCursor.lastIndexOf('-'),
-                textBeforeCursor.lastIndexOf('*'),
-                textBeforeCursor.lastIndexOf('/'),
-                textBeforeCursor.lastIndexOf('%'),
-                textBeforeCursor.lastIndexOf('('),
-                textBeforeCursor.lastIndexOf(')'),
-                textBeforeCursor.lastIndexOf('<'),
-                textBeforeCursor.lastIndexOf('>'),
-                textBeforeCursor.lastIndexOf('{'),
-                textBeforeCursor.lastIndexOf('}'),
-                textBeforeCursor.lastIndexOf('['),
-                textBeforeCursor.lastIndexOf(']'));
-        if (startOfCurrentWord != 0) {
-          // exclude limit characters, except on document start
-          startOfCurrentWord += 1;
+        int startOfCurrentWord = 0;
+        Matcher matcher = Pattern.compile("\\W").matcher(textBeforeCursor);
+        while (matcher.find()) {
+          startOfCurrentWord = matcher.start();
         }
 
         String toBeCompleted =
