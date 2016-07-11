@@ -70,7 +70,7 @@ public class JavaCodeCompletion extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    System.out.println(commandMessage);
+//    System.out.println(commandMessage);
     if (commandMessage.getTag().equals(CommandMessage.TAG_SOURCE_POSITION)) {
       SourcePositionContent sourcePositionContent = commandMessage.asSourcePosition();
 
@@ -94,7 +94,7 @@ public class JavaCodeCompletion extends MontoService {
 
         String toBeCompleted =
             sourceMessage.getContents().substring(startOfCurrentWord, cursorPosition).trim();
-        System.out.println(toBeCompleted);
+//        System.out.println(toBeCompleted);
 
         List<Completion> relevant =
             identifiers
@@ -109,7 +109,7 @@ public class JavaCodeCompletion extends MontoService {
                             identifierTypeToIcon(identifier.getType())))
                 .collect(Collectors.toList());
 
-        System.out.printf("Relevant: %s\n", relevant);
+//        System.out.printf("Relevant: %s\n", relevant);
 
         long end = System.nanoTime();
         sendProductMessage(
