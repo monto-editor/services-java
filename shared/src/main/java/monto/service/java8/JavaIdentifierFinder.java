@@ -1,5 +1,12 @@
 package monto.service.java8;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
@@ -22,9 +29,6 @@ import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
 import monto.service.types.Source;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class JavaIdentifierFinder extends MontoService {
 
@@ -159,49 +163,36 @@ public class JavaIdentifierFinder extends MontoService {
       ASTNode mainAstRoot = GsonMonto.fromJson(mainAstMessage, ASTNode.class);
       Set<String> importedFiles = getImportedFiles(mainSourceCode, mainAstRoot);
 
-      if (containsAllAstAndSourceMessageProducts(request, importedFiles)) {
-        // find identifiers from main and all imported files
+      if (containsAllIdentifierProducts(request, importedFiles)) {
+        // find identifiers from main and combine them with the imported ones
         identifiers = getIdentifiersFromAST(mainSourceCode, mainAstRoot);
         for (String importedFile : importedFiles) {
-          String importedSourceCode =
-              request.getSourceMessage(new Source(importedFile)).get().getContents();
-          ASTNode importedAstRoot =
-              GsonMonto.fromJson(
+          List<Identifier> importedIdentifiers =
+              GsonMonto.fromJsonArray(
                   request
-                      .getProductMessage(new Source(importedFile), Products.AST, Languages.JAVA)
-                      .get()
-                      .getContents(),
-                  ASTNode.class);
-          identifiers.addAll(getIdentifiersFromAST(importedSourceCode, importedAstRoot));
+                      .getProductMessage(
+                          new Source(importedFile), Products.IDENTIFIER, Languages.JAVA)
+                      .get(),
+                  Identifier[].class);
+          identifiers.addAll(importedIdentifiers);
         }
       } else {
-        // re-request all source messages and ASTs for imported files
-        Set<DynamicDependency> astDependencies =
+        // re-request all identifiers for imported files
+        Set<DynamicDependency> identifierDependencies =
             importedFiles
                 .stream()
                 .map(
                     importedFile
                         -> new DynamicDependency(
                             new Source(importedFile),
-                            JavaServices.JAVACC_PARSER,
-                            Products.AST,
+                            JavaServices.IDENTIFIER_FINDER,
+                            Products.IDENTIFIER,
                             Languages.JAVA))
                 .collect(Collectors.toSet());
-        Set<DynamicDependency> sourceDependencies =
-            importedFiles
-                .stream()
-                .map(
-                    importedFile
-                        -> DynamicDependency.sourceDependency(
-                            new Source(importedFile), Languages.JAVA))
-                .collect(Collectors.toSet());
-
-        Set<DynamicDependency> allDynDeps = new HashSet<>();
-        allDynDeps.addAll(astDependencies);
-        allDynDeps.addAll(sourceDependencies);
 
         RegisterDynamicDependencies dynamicDependencies =
-            new RegisterDynamicDependencies(request.getSource(), getServiceId(), allDynDeps);
+            new RegisterDynamicDependencies(
+                request.getSource(), getServiceId(), identifierDependencies);
         System.out.println("requesting " + dynamicDependencies);
         registerDynamicDependencies(dynamicDependencies);
         return;
@@ -221,8 +212,7 @@ public class JavaIdentifierFinder extends MontoService {
         Products.IDENTIFIER,
         Languages.JAVA,
         GsonMonto.toJsonTree(identifiers),
-        mainAstMessage.getTime() + end - start // TODO incorporate DynDep AST messages
-        );
+        mainAstMessage.getTime() + end - start);
   }
 
   private Set<String> getImportedFiles(String sourceCode, ASTNode root) {
@@ -245,13 +235,11 @@ public class JavaIdentifierFinder extends MontoService {
     return imports;
   }
 
-  private boolean containsAllAstAndSourceMessageProducts(
-      Request request, Set<String> importedFiles) {
+  private boolean containsAllIdentifierProducts(Request request, Set<String> importedFiles) {
     for (String importedFile : importedFiles) {
       if (!request
-              .getProductMessage(new Source(importedFile), Products.AST, Languages.JAVA)
-              .isPresent()
-          || !request.getSourceMessage(new Source(importedFile)).isPresent()) {
+          .getProductMessage(new Source(importedFile), Products.IDENTIFIER, Languages.JAVA)
+          .isPresent()) {
         return false;
       }
     }
@@ -312,8 +300,11 @@ public class JavaIdentifierFinder extends MontoService {
           break;
 
         case "VariableDeclaratorId":
-          if (fieldDeclaration) identifiers.add(new Identifier(node.extract(sourceCode), "field"));
-          else identifiers.add(new Identifier(node.extract(sourceCode), "variable"));
+          if (fieldDeclaration) {
+            identifiers.add(new Identifier(node.extract(sourceCode), "field"));
+          } else {
+            identifiers.add(new Identifier(node.extract(sourceCode), "variable"));
+          }
           break;
 
         case "MethodDeclaration":
