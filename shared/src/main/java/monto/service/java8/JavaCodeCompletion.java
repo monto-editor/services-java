@@ -1,12 +1,10 @@
 package monto.service.java8;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.net.URL;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,6 +13,8 @@ import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
 import monto.service.command.SourcePositionContent;
 import monto.service.completion.Completion;
+import monto.service.dependency.DynamicDependency;
+import monto.service.dependency.RegisterCommandMessageDependencies;
 import monto.service.gson.GsonMonto;
 import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
@@ -22,14 +22,10 @@ import monto.service.product.Products;
 import monto.service.region.Region;
 import monto.service.registration.ProductDependency;
 import monto.service.registration.SourceDependency;
-import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
-import monto.service.types.Source;
 
 public class JavaCodeCompletion extends MontoService {
-
-  private Map<Source, Pair<SourceMessage, List<Identifier>>> identifierCache;
 
   public JavaCodeCompletion(ZMQConfiguration zmqConfig) {
     super(
@@ -44,42 +40,27 @@ public class JavaCodeCompletion extends MontoService {
             new SourceDependency(Languages.JAVA),
             new ProductDependency(
                 JavaServices.IDENTIFIER_FINDER, Products.IDENTIFIER, Languages.JAVA)));
-
-    identifierCache = new HashMap<>();
-  }
-
-  @Override
-  public void onRequest(Request request) {
-
-    Source mainSource = request.getSource();
-    SourceMessage sourceMessage =
-        request
-            .getSourceMessage(mainSource)
-            .orElseThrow(() -> new IllegalArgumentException("No source message in request"));
-    ProductMessage identifierMessage =
-        request
-            .getProductMessage(mainSource, Products.IDENTIFIER, Languages.JAVA)
-            .orElseThrow(() -> new IllegalArgumentException("No identifier message in request"));
-
-    List<Identifier> identifiers = GsonMonto.fromJsonArray(identifierMessage, Identifier[].class);
-
-    identifierCache.put(mainSource, new ImmutablePair<>(sourceMessage, identifiers));
   }
 
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-//    System.out.println(commandMessage);
     if (commandMessage.getTag().equals(CommandMessage.TAG_SOURCE_POSITION)) {
       SourcePositionContent sourcePositionContent = commandMessage.asSourcePosition();
 
-      if (identifierCache.containsKey(sourcePositionContent.getSource())) {
-        Pair<SourceMessage, List<Identifier>> sourceMessageListPair =
-            identifierCache.get(sourcePositionContent.getSource());
+      Optional<SourceMessage> maybeSourceMessage =
+          commandMessage.getSourceMessage(sourcePositionContent.getSource());
+      Optional<ProductMessage> maybeProductMessage =
+          commandMessage.getProductMessage(
+              sourcePositionContent.getSource(), Products.IDENTIFIER, Languages.JAVA);
+      if (maybeSourceMessage.isPresent() && maybeProductMessage.isPresent()) {
 
-        SourceMessage sourceMessage = sourceMessageListPair.getLeft();
-        List<Identifier> identifiers = sourceMessageListPair.getRight();
+        //        System.out.println("CommandMessage contains all dependencies.");
+
+        SourceMessage sourceMessage = maybeSourceMessage.get();
+        List<Identifier> identifiers =
+            GsonMonto.fromJsonArray(maybeProductMessage.get(), Identifier[].class);
 
         int cursorPosition = sourcePositionContent.getSelection().getStartOffset();
 
@@ -94,7 +75,7 @@ public class JavaCodeCompletion extends MontoService {
 
         String toBeCompleted =
             sourceMessage.getContents().substring(startOfCurrentWord, cursorPosition).trim();
-//        System.out.println(toBeCompleted);
+        //        System.out.println(toBeCompleted);
 
         List<Completion> relevant =
             identifiers
@@ -109,7 +90,7 @@ public class JavaCodeCompletion extends MontoService {
                             identifierTypeToIcon(identifier.getType())))
                 .collect(Collectors.toList());
 
-//        System.out.printf("Relevant: %s\n", relevant);
+        //        System.out.printf("Relevant: %s\n", relevant);
 
         long end = System.nanoTime();
         sendProductMessage(
@@ -119,6 +100,23 @@ public class JavaCodeCompletion extends MontoService {
             Languages.JAVA,
             GsonMonto.toJsonTree(relevant),
             end - start);
+      } else {
+        // Request dependencies
+        Set<DynamicDependency> dependencies = new HashSet<>();
+        dependencies.add(
+            DynamicDependency.sourceDependency(sourcePositionContent.getSource(), Languages.JAVA));
+        dependencies.add(
+            new DynamicDependency(
+                sourcePositionContent.getSource(),
+                JavaServices.IDENTIFIER_FINDER,
+                Products.IDENTIFIER,
+                Languages.JAVA));
+
+        System.out.println(
+            "Registering new CommandMessage dependencies: " + dependencies.toString());
+
+        registerCommandMessageDependencies(
+            new RegisterCommandMessageDependencies(commandMessage, dependencies));
       }
     }
   }
