@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
@@ -46,8 +47,9 @@ public class JavaCodeCompletion extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    if (commandMessage.getTag().equals(CommandMessage.TAG_SOURCE_POSITION)) {
-      SourcePositionContent sourcePositionContent = commandMessage.asSourcePosition();
+    if (commandMessage.getTag().equals(SourcePositionContent.TAG_SOURCE_POSITION)) {
+      SourcePositionContent sourcePositionContent =
+          SourcePositionContent.fromCommandMessage(commandMessage);
 
       Optional<SourceMessage> maybeSourceMessage =
           commandMessage.getSourceMessage(sourcePositionContent.getSource());
