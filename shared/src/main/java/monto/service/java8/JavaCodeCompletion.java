@@ -8,12 +8,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
-import monto.service.completion.SourcePositionContent;
 import monto.service.completion.Completion;
+import monto.service.completion.SourcePositionContent;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
 import monto.service.gson.GsonMonto;
@@ -21,8 +20,6 @@ import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.Region;
-import monto.service.registration.ProductDependency;
-import monto.service.registration.SourceDependency;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 
@@ -37,10 +34,7 @@ public class JavaCodeCompletion extends MontoService {
         Languages.JAVA,
         Products.COMPLETIONS,
         options(),
-        dependencies(
-            new SourceDependency(Languages.JAVA),
-            new ProductDependency(
-                JavaServices.IDENTIFIER_FINDER, Products.IDENTIFIER, Languages.JAVA)));
+        dependencies());
   }
 
   @Override
@@ -58,7 +52,7 @@ public class JavaCodeCompletion extends MontoService {
               sourcePositionContent.getSource(), Products.IDENTIFIER, Languages.JAVA);
       if (maybeSourceMessage.isPresent() && maybeProductMessage.isPresent()) {
 
-        //        System.out.println("CommandMessage contains all dependencies.");
+        // System.out.println("CommandMessage contains all dependencies.");
 
         SourceMessage sourceMessage = maybeSourceMessage.get();
         List<Identifier> identifiers =
@@ -77,8 +71,9 @@ public class JavaCodeCompletion extends MontoService {
 
         String toBeCompleted =
             sourceMessage.getContents().substring(startOfCurrentWord, cursorPosition).trim();
-        //        System.out.println(toBeCompleted);
+        // System.out.println(toBeCompleted);
 
+        int deleteBeginOffset = startOfCurrentWord + 1;
         List<Completion> relevant =
             identifiers
                 .stream()
@@ -88,11 +83,12 @@ public class JavaCodeCompletion extends MontoService {
                         -> new Completion(
                             identifier.getIdentifier(),
                             identifier.getIdentifier(),
-                            //sourceMessage.getSelection().get().getStartOffset(),
+                            deleteBeginOffset,
+                            cursorPosition - deleteBeginOffset,
                             identifierTypeToIcon(identifier.getType())))
                 .collect(Collectors.toList());
 
-        //        System.out.printf("Relevant: %s\n", relevant);
+        // System.out.printf("Relevant: %s\n", relevant);
 
         long end = System.nanoTime();
         sendProductMessage(
