@@ -9,4 +9,5 @@ public class JavaServices {
   public static final ServiceId OUTLINER = new ServiceId("javaOutliner");
   public static final ServiceId CODE_COMPLETION = new ServiceId("javaCodeCompletion");
   public static final ServiceId IDENTIFIER_FINDER = new ServiceId("javaIdentifierFinder");
+  public static final ServiceId RUNNER = new ServiceId("javaRunner");
 }

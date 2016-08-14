@@ -45,6 +45,7 @@ public class Main {
         .addOption("javaccparser", false, "enable JavaCC parser")
         .addOption("outline", false, "enable Java outliner")
         .addOption("codecompletion", false, "enable Java code completioner")
+        .addOption("runner", false, "enable Java runtime service")
         .addOption("address", true, "address of services")
         .addOption("registration", true, "address of broker registration")
         .addOption("resources", true, "port for http resource server")
@@ -80,6 +81,9 @@ public class Main {
     if (cmd.hasOption("codecompletion")) {
       services.add(new JavaIdentifierFinder(zmqConfig));
       services.add(new JavaCodeCompletion(zmqConfig));
+    }
+    if (cmd.hasOption("runner")) {
+      services.add(new JavaRunner(zmqConfig));
     }
     if (cmd.hasOption("debug")) {
       for (MontoService service : services) service.enableDebugging();
