@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
-import monto.service.command.SourcePositionContent;
+import monto.service.completion.SourcePositionContent;
 import monto.service.completion.Completion;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
@@ -47,7 +47,7 @@ public class JavaCodeCompletion extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    if (commandMessage.getTag().equals(SourcePositionContent.TAG_SOURCE_POSITION)) {
+    if (commandMessage.getTag().equals(SourcePositionContent.TAG)) {
       SourcePositionContent sourcePositionContent =
           SourcePositionContent.fromCommandMessage(commandMessage);
 
