@@ -33,6 +33,8 @@ import monto.service.run.ProcessTerminateContent;
 import monto.service.run.StreamOutput;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
+import monto.service.types.LongKey;
+import monto.service.types.Source;
 
 public class JavaRunner extends MontoService {
   private JavaCompiler compiler;
@@ -77,12 +79,14 @@ public class JavaRunner extends MontoService {
                       new String[0],
                       workingDirectory.toFile());
 
-          InputStreamToCommandUpdateThread stdoutThread =
-              new InputStreamToCommandUpdateThread(
-                  StreamOutput.SourceStream.OUT, commandMessage, process.getInputStream());
-          InputStreamToCommandUpdateThread stderrThread =
-              new InputStreamToCommandUpdateThread(
-                  StreamOutput.SourceStream.ERR, commandMessage, process.getErrorStream());
+          InputStreamToProductThread stdoutThread =
+              new InputStreamToProductThread(
+                  StreamOutput.SourceStream.OUT, commandMessage.getSession(),
+                  process.getInputStream());
+          InputStreamToProductThread stderrThread =
+              new InputStreamToProductThread(
+                  StreamOutput.SourceStream.ERR, commandMessage.getSession(),
+                  process.getErrorStream());
 
           stdoutThread.start();
           stderrThread.start();
@@ -166,14 +170,14 @@ public class JavaRunner extends MontoService {
 
   class ProcessTerminationThread extends Thread {
     private final Process process;
-    private final InputStreamToCommandUpdateThread stdoutThread;
-    private final InputStreamToCommandUpdateThread stderrThread;
+    private final InputStreamToProductThread stdoutThread;
+    private final InputStreamToProductThread stderrThread;
     private final Path workingDirectory;
 
     public ProcessTerminationThread(
         Process process,
-        InputStreamToCommandUpdateThread stdoutThread,
-        InputStreamToCommandUpdateThread stderrThread,
+        InputStreamToProductThread stdoutThread,
+        InputStreamToProductThread stderrThread,
         Path workingDirectory) {
       this.process = process;
       this.stdoutThread = stdoutThread;
@@ -225,18 +229,18 @@ public class JavaRunner extends MontoService {
     }
   }
 
-  class InputStreamToCommandUpdateThread extends Thread {
+  class InputStreamToProductThread extends Thread {
 
     private final StreamOutput.SourceStream sourceStream;
-    private final CommandMessage commandMessage;
+    private final int session;
     private final InputStream inputStream;
 
-    public InputStreamToCommandUpdateThread(
+    public InputStreamToProductThread(
         StreamOutput.SourceStream sourceStream,
-        CommandMessage commandMessage,
+        int session,
         InputStream inputStream) {
       this.sourceStream = sourceStream;
-      this.commandMessage = commandMessage;
+      this.session = session;
       this.inputStream = inputStream;
     }
 
@@ -253,11 +257,11 @@ public class JavaRunner extends MontoService {
               if (availableBytes != reed) {
                 System.err.println("weird");
               }
-              sendCommandMessageUpdate(
-                  commandMessage,
-                  "streamOutput",
-                  GsonMonto.toJsonTree(new StreamOutput(sourceStream, bytes)));
-              System.out.print(new String(bytes, 0, reed, Charset.forName("UTF-8")));
+              String data = new String(bytes, 0, reed, Charset.forName("UTF-8"));
+              sendProductMessage(new LongKey(-1), new Source("session:run:" + session), null,
+                  Languages.JAVA,
+                  GsonMonto.toJsonTree(new StreamOutput(sourceStream, data, session)));
+              System.out.print(data);
             } else {
               try {
                 sleep(10);
