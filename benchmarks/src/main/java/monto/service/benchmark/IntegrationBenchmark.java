@@ -48,7 +48,10 @@ public class IntegrationBenchmark extends Benchmark {
     protected synchronized void setup() throws Exception {
         System.out.printf("startup broker: %s\n", brokerPath);
         broker = new ProcessBuilder(
-                brokerPath.toString(),
+                "stack",
+                "exec",
+                "broker",
+                "--",
                 "--source", "tcp://*:5000",
                 "--sink", "tcp://*:5001",
                 "--registration", "tcp://*:5002",
@@ -56,6 +59,7 @@ public class IntegrationBenchmark extends Benchmark {
                 "--servicesTo", "Port 5025")
                 .redirectOutput(new File("broker.stdout"))
                 .redirectError(new File("broker.stderr"))
+                .directory(brokerPath.toFile())
                 .start();
         Thread.sleep(1000);
         System.out.printf("startup services: %s\n", servicesPath);
@@ -72,7 +76,7 @@ public class IntegrationBenchmark extends Benchmark {
         command.add("8080");
         services = new ProcessBuilder(command)
                 .redirectOutput(new File("services.stdout"))
-               .redirectError(new File("services.stderr"))
+                .redirectError(new File("services.stderr"))
                 .start();
         Thread.sleep(1000);
         System.out.println("setup connection");
