@@ -82,13 +82,25 @@ project(':benchmarks') {
     include('**/*.java')
   }
 
-  task exec(type: JavaExec, dependsOn: [prepareAnt,classes,':main:shadowjar']) {
+  task exec(type: JavaExec, dependsOn: [prepareAnt,classes,':main:shadowJar']) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'monto.service.benchmark.IntegrationBenchmark'
-    jvmArgs = [ "-Dcorpus.location=${new File(buildDir, 'apache-ant')}",
-                "-Dcvs.output.directory=${buildDir}",
-                "-Dbroker=../../broker/dist/build/broker",
+    jvmArgs = [ "-Dcorpus.location=${new File(buildDir, 'apache-ant/')}",
+                "-Dcsv.output=${buildDir}",
+                "-Dbroker=../../broker/dist/build/broker/broker",
                 "-Dservices.jar=../main/build/libs/main-all.jar"
               ]
+  }
+
+  task calcFileLengths(type: Exec, dependsOn: prepareAnt) {
+    workingDir buildDir
+    commandLine 'cloc', '--csv', '--by-file',
+                "--out=${new File(buildDir, 'filelengths.csv')}",
+                'apache-ant/'
+  }
+
+  task plot(type: Exec, dependsOn: [calcFileLengths,exec]) {
+    workingDir buildDir
+    commandLine 'Rscript', '../../plot.r'
   }
 }

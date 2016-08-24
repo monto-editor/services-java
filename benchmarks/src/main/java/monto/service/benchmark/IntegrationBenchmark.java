@@ -14,8 +14,10 @@ import monto.service.product.ProductMessage;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
+import monto.service.types.MessageUnavailableException;
 import monto.service.types.ServiceId;
 import monto.service.types.Source;
+import monto.service.types.UnrecongizedMessageException;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
@@ -31,6 +33,7 @@ public class IntegrationBenchmark extends Benchmark {
     private Context context;
     private IDESource source;
     private Sink sink;
+	private int received;
 
     public IntegrationBenchmark(Path brokerPath, Path servicesPath, ServiceId serviceId, String... modes) {
         this.brokerPath = brokerPath;
@@ -102,24 +105,35 @@ public class IntegrationBenchmark extends Benchmark {
         SourceMessage srcMsg = new SourceMessage(id, src, Languages.JAVA, contents);
         id = id.freshId();
         source.sendSource(srcMsg);
+        received = 0;
         while(true) {
 	        ProductMessage prod = sink.<ProductMessage,RuntimeException>receive(
-				p -> p,
+				p    -> { received++; return p; },
 				disc -> { throw new RuntimeException("Unexpected discovery response"); });
 	        if(prod.getServiceId().equals(serviceId))
-			return prod.getTime();
+	        	return prod.getTime();
         }
+    }
+    
+    @Override
+    protected void postMeasure() throws UnrecongizedMessageException, MessageUnavailableException, RuntimeException {
+    	// Drain messages from message queue
+    	while(received < modes.size()) {
+    		sink.<RuntimeException>receive(
+    				p -> { received++; },
+    				disc -> { throw new RuntimeException("Unexpected discovery response"); });
+    	}
     }
 
     public static void main(String[] args) throws Exception {
         Path corpus = Paths.get(System.getProperty("corpus.location"));
-        Path csvOutputDir = Paths.get(System.getProperty("csv.output.directory"));
+        Path csvOutputDir = Paths.get(System.getProperty("csv.output"));
         Path brokerPath = Paths.get(System.getProperty("broker"));
         Path servicesJar = Paths.get(System.getProperty("services.jar"));
         for (ServiceId service : Arrays.asList(JavaServices.HIGHLIGHTER, JavaServices.JAVACC_PARSER, JavaServices.OUTLINER)) {
             Path csvOutput = csvOutputDir.resolve(service.toString() + ".csv");
-            IntegrationBenchmark bench = new IntegrationBenchmark(brokerPath, servicesJar, service, "-highlighter", "-javaccparser", "-outline");
-            bench.runBenchmark(corpus, csvOutput, 10, 20, 3);
+            IntegrationBenchmark bench = new IntegrationBenchmark(brokerPath, servicesJar, service, "-highlighting", "-javaccparser", "-outline");
+            bench.runBenchmark(corpus, csvOutput, 10, 100);
         }
     }
 }
