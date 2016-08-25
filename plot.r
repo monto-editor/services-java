@@ -1,7 +1,6 @@
 library('ggplot2')
 library('outliers')
 library('dplyr')
-library('tikzDevice')
 
 # filelengths.csv was generated with cloc --csv --by-file <code-dir> --report-file=filelengths.csv
 filelengths <- read.csv("filelengths.csv")[ ,1:5]
@@ -25,9 +24,6 @@ p <- ggplot(filelengths, aes(x=factor(0), y=lines)) +
         panel.grid.major = element_line(colour = "#808080",size=0.4))
 
 ggsave(p,filename="filelengths.png", height=2.5,dpi=120)
-# tikz(file="filelengths.tex", width=3.2, height=2.5)
-# print(p)
-# dev.off()
 
 tokenizer <- read.csv("javaHighlighter.csv")
 tokenizer$Service <- "Java Highlighting"
@@ -51,17 +47,6 @@ data <- data %>%
   group_by(file,Service) %>%
   summarise(overall=mean(overall),code=mean(code),blank=mean(blank),comment=mean(comment),productive=mean(productive))
 
-# p <- ggplot(data, aes(y=overall/1e6, x=bytes, linetype=Service)) +
-#   geom_point(color="black") +
-#   ylab("response time (ms)") +
-#   xlab("file size (bytes)") +
-#   theme(text = element_text(size=8),
-#         legend.position=c(.2, .7))
-# ggsave(p,filename="roundtrip.png")
-# tikz(file="/Users/svenkeidel/Documents/monto/paper/roundtrip.tex", width=3.2, height=2.5)
-# print(p)
-# dev.off()
-
 p <- ggplot(data, aes(y=overall/1e6, x=code+blank+comment, linetype=Service)) +
   geom_smooth(color="black") +
   ylab("response time (ms)") +
@@ -73,28 +58,3 @@ p <- ggplot(data, aes(y=overall/1e6, x=code+blank+comment, linetype=Service)) +
         panel.grid.major = element_line(colour = "#808080",size=0.4),
         legend.key.width= unit(3,"line"))
 ggsave(p,filename="roundtriploc.png")
-#tikz(file="/Users/svenkeidel/Documents/monto/paper/roundtriploc.tex", width=3.2, height=2.5)
-# print(p)
-# dev.off()
-
-# p <- ggplot(data, aes(y=(overall-productive)/1e6, x=bytes, linetype=Service)) +
-#   geom_point(color="black") +
-#   ylab("overhead (ms)") +
-#   xlab("file size (bytes)") +
-#   theme(text = element_text(size=8),
-#         legend.position=c(.2, .7))
-# ggsave(p,filename="overhead.png")
-# tikz(file="/Users/svenkeidel/Documents/monto/paper/overhead.tex", width=3.2, height=2.5)
-# print(p)
-# dev.off()
-
-# p <- ggplot(data, aes(y=(overall-productive)/1e6, x=lines, linetype=Service)) +
-#   geom_smooth(color="black") +
-#   ylab("overhead (ms)") +
-#   xlab("lines of code") +
-#   theme(text = element_text(size=8),
-#         legend.position=c(.2, .7))
-# ggsave(p,filename="overheadloc.png")
-# tikz(file="/Users/svenkeidel/Documents/monto/paper/overheadloc.tex", width=3.2, height=2.5)
-# print(p)
-# dev.off()

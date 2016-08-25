@@ -77,9 +77,10 @@ project(':benchmarks') {
   }
 
   task prepareAnt(type: Copy, dependsOn: unzipAnt) {
-    from fileTree(new File(buildDir, 'apache-ant-1.9.7/src/main')).files
-    into new File(buildDir, 'apache-ant')
-    include('**/*.java')
+    from ('build/apache-ant-1.9.7/src/main') {
+      include('**/*.java')
+    }
+    into ('build/apache-ant')
   }
 
   task exec(type: JavaExec, dependsOn: [prepareAnt,classes,':main:shadowJar']) {
