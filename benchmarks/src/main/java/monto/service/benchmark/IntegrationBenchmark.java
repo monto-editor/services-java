@@ -119,15 +119,15 @@ public class IntegrationBenchmark extends Benchmark {
         }
     }
     
-    @Override
-    protected void postMeasure() throws UnrecongizedMessageException, MessageUnavailableException, RuntimeException {
-    	// Drain messages from message queue
-    	while(received < modes.size()) {
-    		sink.<RuntimeException>receive(
-    				p -> { received++; },
-    				disc -> { throw new RuntimeException("Unexpected discovery response"); });
-    	}
-    }
+    // @Override
+    // protected void postMeasure() throws UnrecongizedMessageException, MessageUnavailableException, RuntimeException {
+    // 	// Drain messages from message queue
+    // 	while(received < modes.size()) {
+    //         sink.<Void,RuntimeException>receive(
+    //           p -> { received++; },
+    //           disc -> { throw new RuntimeException("Unexpected discovery response"); });
+    // 	}
+    // }
 
     public static void main(String[] args) throws Exception {
         Path corpus = Paths.get(System.getProperty("corpus.location"));
