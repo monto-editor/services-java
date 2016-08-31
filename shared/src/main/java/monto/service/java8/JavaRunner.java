@@ -28,9 +28,10 @@ import monto.service.command.CommandMessage;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
 import monto.service.gson.GsonMonto;
-import monto.service.run.ProcessRunContent;
-import monto.service.run.ProcessTerminateContent;
+import monto.service.product.Products;
+import monto.service.run.LaunchConfiguration;
 import monto.service.run.StreamOutput;
+import monto.service.run.TerminateProcess;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
@@ -46,7 +47,8 @@ public class JavaRunner extends MontoService {
         JavaServices.RUNNER,
         "Java runtime service",
         "Compiles and runs sources via CommandMessages and reports back stdout and stderr",
-        Collections.EMPTY_LIST,
+        Languages.JAVA,
+        Products.STREAM_OUTPUT,
         options(),
         dependencies());
 
@@ -56,10 +58,11 @@ public class JavaRunner extends MontoService {
 
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
-    if (commandMessage.getTag().equals(ProcessRunContent.TAG)) {
-      ProcessRunContent processRunContent = ProcessRunContent.fromCommandMessage(commandMessage);
+    if (commandMessage.getTag().equals(LaunchConfiguration.TAG)) {
+      LaunchConfiguration launchConfiguration =
+          LaunchConfiguration.fromCommandMessage(commandMessage);
       Optional<SourceMessage> maybeMainClassSourceMessage =
-          commandMessage.getSourceMessage(processRunContent.getMainClassSource());
+          commandMessage.getSourceMessage(launchConfiguration.getMainClassSource());
       // TODO: declare dependencies on imported files
       if (maybeMainClassSourceMessage.isPresent()) {
         try {
@@ -81,11 +84,13 @@ public class JavaRunner extends MontoService {
 
           InputStreamToProductThread stdoutThread =
               new InputStreamToProductThread(
-                  StreamOutput.SourceStream.OUT, commandMessage.getSession(),
+                  StreamOutput.SourceStream.OUT,
+                  commandMessage.getSession(),
                   process.getInputStream());
           InputStreamToProductThread stderrThread =
               new InputStreamToProductThread(
-                  StreamOutput.SourceStream.ERR, commandMessage.getSession(),
+                  StreamOutput.SourceStream.ERR,
+                  commandMessage.getSession(),
                   process.getErrorStream());
 
           stdoutThread.start();
@@ -106,12 +111,13 @@ public class JavaRunner extends MontoService {
         Set<DynamicDependency> dependencies = new HashSet<>();
         dependencies.add(
             DynamicDependency.sourceDependency(
-                processRunContent.getMainClassSource(), Languages.JAVA));
+                launchConfiguration.getMainClassSource(), Languages.JAVA));
         registerCommandMessageDependencies(
             new RegisterCommandMessageDependencies(commandMessage, dependencies));
       }
-    } else if (commandMessage.getTag().equals(ProcessTerminateContent.TAG)) {
-      // CommandMessage doesn't need to be parsed into content, because no additional information is needed for termination
+    } else if (commandMessage.getTag().equals(TerminateProcess.TAG)) {
+      // CommandMessage doesn't need to be parsed into content, because no additional information is
+      // needed for termination
       ProcessTerminationThread processTerminationThread =
           processThreadMap.get(commandMessage.getSession());
       if (processTerminationThread != null) {
@@ -236,9 +242,7 @@ public class JavaRunner extends MontoService {
     private final InputStream inputStream;
 
     public InputStreamToProductThread(
-        StreamOutput.SourceStream sourceStream,
-        int session,
-        InputStream inputStream) {
+        StreamOutput.SourceStream sourceStream, int session, InputStream inputStream) {
       this.sourceStream = sourceStream;
       this.session = session;
       this.inputStream = inputStream;
@@ -253,12 +257,15 @@ public class JavaRunner extends MontoService {
             availableBytes = inputStream.available();
             if (availableBytes != 0) {
               byte[] bytes = new byte[availableBytes];
-              int reed = inputStream.read(bytes);
-              if (availableBytes != reed) {
+              int red = inputStream.read(bytes);
+              if (availableBytes != red) {
                 System.err.println("weird");
               }
-              String data = new String(bytes, 0, reed, Charset.forName("UTF-8"));
-              sendProductMessage(new LongKey(-1), new Source("session:run:" + session), null,
+              String data = new String(bytes, 0, red, Charset.forName("UTF-8"));
+              sendProductMessage(
+                  new LongKey(-1),
+                  new Source("session:run:" + session),
+                  Products.STREAM_OUTPUT,
                   Languages.JAVA,
                   GsonMonto.toJsonTree(new StreamOutput(sourceStream, data, session)));
               System.out.print(data);
@@ -284,7 +291,8 @@ public class JavaRunner extends MontoService {
     final String code;
 
     JavaSourceFromString(String name, String code) {
-      super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
+      //      super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
+      super(URI.create("string:///" + name), Kind.SOURCE);
       this.code = code;
     }
 
