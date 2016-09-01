@@ -95,9 +95,9 @@ project(':benchmarks') {
 
   task calcFileLengths(type: Exec, dependsOn: prepareAnt) {
     workingDir buildDir
-    commandLine 'cloc', '--csv', '--by-file',
+    commandLine 'cloc', '--csv', '--fullpath', '--by-file',
                 "--out=${new File(buildDir, 'filelengths.csv')}",
-                'apache-ant/'
+                "${buildDir}/apache-ant/"
   }
 
   task plot(type: Exec, dependsOn: [calcFileLengths,exec]) {
