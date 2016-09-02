@@ -4,7 +4,7 @@ library('dplyr')
 
 # filelengths.csv was generated with cloc --csv --by-file <code-dir> --report-file=filelengths.csv
 filelengths <- read.csv("filelengths.csv")[ ,1:5]
-filelengths$file <- substring(filelengths$filename,nchar("apache-ant/")+1)
+filelengths$file <- filelengths$filename
 filelengths$lines <- filelengths$code + filelengths$blank + filelengths$comment
 print(nrow(filelengths))
 print(sum(filelengths$lines))
