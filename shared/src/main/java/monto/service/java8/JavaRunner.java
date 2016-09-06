@@ -1,7 +1,10 @@
 package monto.service.java8;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
@@ -29,7 +32,9 @@ import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
 import monto.service.gson.GsonMonto;
 import monto.service.product.Products;
+import monto.service.registration.ProductDescription;
 import monto.service.run.LaunchConfiguration;
+import monto.service.run.ProcessTerminated;
 import monto.service.run.StreamOutput;
 import monto.service.run.TerminateProcess;
 import monto.service.source.SourceMessage;
@@ -47,8 +52,10 @@ public class JavaRunner extends MontoService {
         JavaServices.RUNNER,
         "Java runtime service",
         "Compiles and runs sources via CommandMessages and reports back stdout and stderr",
-        Languages.JAVA,
-        Products.STREAM_OUTPUT,
+        Arrays.asList(
+            new ProductDescription(Products.STREAM_OUTPUT, Languages.JAVA),
+            new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA)
+        ),
         options(),
         dependencies());
 
@@ -104,7 +111,8 @@ public class JavaRunner extends MontoService {
             stderrThread.start();
 
             ProcessTerminationThread processTerminationThread =
-                new ProcessTerminationThread(process, stdoutThread, stderrThread, workingDirectory);
+                new ProcessTerminationThread(process, commandMessage.getSession(), stdoutThread,
+                    stderrThread, workingDirectory);
 
             processThreadMap.put(commandMessage.getSession(), processTerminationThread);
 
@@ -183,16 +191,19 @@ public class JavaRunner extends MontoService {
 
   class ProcessTerminationThread extends Thread {
     private final Process process;
+    private final int session;
     private final InputStreamToProductThread stdoutThread;
     private final InputStreamToProductThread stderrThread;
     private final Path workingDirectory;
 
     public ProcessTerminationThread(
         Process process,
+        int session,
         InputStreamToProductThread stdoutThread,
         InputStreamToProductThread stderrThread,
         Path workingDirectory) {
       this.process = process;
+      this.session = session;
       this.stdoutThread = stdoutThread;
       this.stderrThread = stderrThread;
       this.workingDirectory = workingDirectory;
@@ -216,10 +227,7 @@ public class JavaRunner extends MontoService {
           e1.printStackTrace();
         }
       } finally {
-        System.out.println("process exited");
-        stdoutThread.interrupt();
-        stderrThread.interrupt();
-        System.out.println("interrupted threads");
+        System.out.println("process exited\nwaiting for stream thread to join");
         try {
           stdoutThread.join();
           System.out.println("stdout joined");
@@ -230,7 +238,14 @@ public class JavaRunner extends MontoService {
           e.printStackTrace();
         }
 
-        System.out.println(process.exitValue());
+        sendProductMessage(
+            new LongKey(-1),
+            new Source("session:run:" + session),
+            Products.PROCESS_TERMINATED,
+            Languages.JAVA,
+            GsonMonto.toJsonTree(new ProcessTerminated(process.exitValue(), session)));
+
+        System.out.println("Sent exitValue product " + process.exitValue());
 
         try {
           removeDirectoryRecursively(workingDirectory);
@@ -243,7 +258,6 @@ public class JavaRunner extends MontoService {
   }
 
   class InputStreamToProductThread extends Thread {
-
     private final StreamOutput.SourceStream sourceStream;
     private final int session;
     private final InputStream inputStream;
@@ -257,40 +271,33 @@ public class JavaRunner extends MontoService {
 
     @Override
     public void run() {
-      while (true) {
-        int availableBytes;
-        if (!isInterrupted()) {
-          try {
-            availableBytes = inputStream.available();
-            if (availableBytes != 0) {
-              byte[] bytes = new byte[availableBytes];
-              int red = inputStream.read(bytes);
-              if (availableBytes != red) {
-                System.err.println("weird");
-              }
-              String data = new String(bytes, 0, red, Charset.forName("UTF-8"));
-              sendProductMessage(
-                  new LongKey(-1),
-                  new Source("session:run:" + session),
-                  Products.STREAM_OUTPUT,
-                  Languages.JAVA,
-                  GsonMonto.toJsonTree(new StreamOutput(sourceStream, data, session)));
-              System.out.print(data);
-            } else {
-              try {
-                sleep(10);
-              } catch (InterruptedException e) {
-                interrupt();
-              }
-            }
-          } catch (IOException e) {
-            e.printStackTrace();
+      try {
+        byte[] bytes = new byte[100];
+        int read = 0;
+
+        while (read != -1) {
+          read = inputStream.read(bytes);
+          if (read > 0) {
+            String data = new String(bytes, 0, read, Charset.forName("UTF-8"));
+            sendProductMessage(
+                new LongKey(-1),
+                new Source("session:run:" + session),
+                Products.STREAM_OUTPUT,
+                Languages.JAVA,
+                GsonMonto.toJsonTree(new StreamOutput(sourceStream, data, session)));
+            log(System.out, "read some data: " + StringEscapeUtils.escapeJava(data));
           }
-        } else {
-          System.out.println("was interrupted");
-          return;
         }
+        log(System.out, "reached EOF");
+      } catch (IOException e) {
+        log(System.err, "encountered " + e.getClass().getName() + ": " + e.getMessage());
+        e.printStackTrace();
       }
+      log(System.out, "is terminating");
+    }
+
+    private void log(PrintStream stream, String message) {
+      stream.printf("%s (%s, %s) %s\n", getClass().getSimpleName(), sourceStream, session, message);
     }
   }
 
