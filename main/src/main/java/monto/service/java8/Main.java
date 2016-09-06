@@ -1,17 +1,16 @@
 package monto.service.java8;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import monto.service.MontoService;
-import monto.service.ZMQConfiguration;
-import monto.service.resources.ResourceServer;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.zeromq.ZContext;
+
+import java.util.ArrayList;
+import java.util.List;
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.resources.ResourceServer;
 
 public class Main {
 
@@ -28,7 +27,9 @@ public class Main {
               public void run() {
                 System.out.println("terminating...");
                 try {
-                  for (MontoService service : services) service.stop();
+                  for (MontoService service : services) {
+                    service.stop();
+                  }
                   resourceServer.stop();
                 } catch (Exception e) {
                   e.printStackTrace();
@@ -83,10 +84,11 @@ public class Main {
       services.add(new JavaCodeCompletion(zmqConfig));
     }
     if (cmd.hasOption("runner")) {
+      services.add(new JavaLogicalNameExtractor(zmqConfig));
       services.add(new JavaRunner(zmqConfig));
     }
     if (cmd.hasOption("debug")) {
-      for (MontoService service : services) service.enableDebugging();
+      services.forEach(MontoService::enableDebugging);
     }
     for (MontoService service : services) {
       service.start();

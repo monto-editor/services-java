@@ -71,38 +71,45 @@ public class JavaRunner extends MontoService {
           Path workingDirectory = Files.createTempDirectory(null);
 
           compileJavaClass(
-              mainClassSourceMessage.getSource().getSource(),
+              mainClassSourceMessage.getSource().getPhysicalName(),
               mainClassSourceMessage.getContents(),
               workingDirectory.toAbsolutePath().toString());
 
-          Process process =
-              Runtime.getRuntime()
-                  .exec(
-                      "java " + mainClassSourceMessage.getSource().getSource(),
-                      new String[0],
-                      workingDirectory.toFile());
+          if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
+            // TODO: send error product instead
+            System.err.println(
+                mainClassSourceMessage
+                    + " doesn't have a logical name.\n"
+                    + "JavaRunner needs that to run the class");
+          } else {
+            Process process =
+                Runtime.getRuntime()
+                    .exec(
+                        "java " + mainClassSourceMessage.getSource().getLogicalName().get(),
+                        new String[0],
+                        workingDirectory.toFile());
 
-          InputStreamToProductThread stdoutThread =
-              new InputStreamToProductThread(
-                  StreamOutput.SourceStream.OUT,
-                  commandMessage.getSession(),
-                  process.getInputStream());
-          InputStreamToProductThread stderrThread =
-              new InputStreamToProductThread(
-                  StreamOutput.SourceStream.ERR,
-                  commandMessage.getSession(),
-                  process.getErrorStream());
+            InputStreamToProductThread stdoutThread =
+                new InputStreamToProductThread(
+                    StreamOutput.SourceStream.OUT,
+                    commandMessage.getSession(),
+                    process.getInputStream());
+            InputStreamToProductThread stderrThread =
+                new InputStreamToProductThread(
+                    StreamOutput.SourceStream.ERR,
+                    commandMessage.getSession(),
+                    process.getErrorStream());
 
-          stdoutThread.start();
-          stderrThread.start();
+            stdoutThread.start();
+            stderrThread.start();
 
-          ProcessTerminationThread processTerminationThread =
-              new ProcessTerminationThread(process, stdoutThread, stderrThread, workingDirectory);
+            ProcessTerminationThread processTerminationThread =
+                new ProcessTerminationThread(process, stdoutThread, stderrThread, workingDirectory);
 
-          processThreadMap.put(commandMessage.getSession(), processTerminationThread);
+            processThreadMap.put(commandMessage.getSession(), processTerminationThread);
 
-          processTerminationThread.start();
-
+            processTerminationThread.start();
+          }
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -149,11 +156,11 @@ public class JavaRunner extends MontoService {
     Files.createDirectory(directory);
   }
 
-  private boolean compileJavaClass(String javaClassName, String code, String outputDirectory)
+  private boolean compileJavaClass(String javaPhysicalFileName, String code, String outputDirectory)
       throws IOException {
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 
-    JavaFileObject file = new JavaSourceFromString(javaClassName, code);
+    JavaFileObject file = new JavaSourceFromString(javaPhysicalFileName, code);
 
     Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(file);
     JavaCompiler.CompilationTask task =
@@ -290,9 +297,8 @@ public class JavaRunner extends MontoService {
   class JavaSourceFromString extends SimpleJavaFileObject {
     final String code;
 
-    JavaSourceFromString(String name, String code) {
-      //      super(URI.create("string:///" + name.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
-      super(URI.create("string:///" + name), Kind.SOURCE);
+    JavaSourceFromString(String physicalName, String code) {
+      super(URI.create("string:///" + physicalName), Kind.SOURCE);
       this.code = code;
     }
 
