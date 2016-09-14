@@ -9,7 +9,6 @@ import monto.service.gson.GsonMonto;
 import monto.service.product.Products;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
-import monto.service.source.LogicalSourceName;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.Source;
@@ -53,15 +52,13 @@ public class JavaLogicalNameExtractor extends MontoService {
           logicalName = className;
         }
 
-        Source sourceWithLogicalName = new Source(source.getPhysicalName(), logicalName);
-
         sendProductMessage(
             sourceMessage.getId(),
             source,
             Products.LOGICAL_SOURCE_NAME,
             Languages.JAVA,
-            GsonMonto.toJsonTree(
-                new LogicalSourceName(sourceWithLogicalName, sourceMessage.getContents())));
+            GsonMonto.toJsonTree(new Source(source.getPhysicalName(), logicalName))
+        );
       } else {
         System.err.println("JavaLogicalNameExtractor couldn't find class name for " + source);
       }
