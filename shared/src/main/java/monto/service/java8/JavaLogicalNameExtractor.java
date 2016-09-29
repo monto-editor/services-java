@@ -26,6 +26,7 @@ public class JavaLogicalNameExtractor extends MontoService {
         dependencies(new SourceDependency(Languages.JAVA)));
   }
 
+  // TODO enums and interface not covered
   private static Pattern CLASS_NAME_PATTERN = Pattern.compile("class\\s+(\\w+)[\\s\\w.]*\\{");
   private static Pattern PACKAGE_NAME_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
 
@@ -57,8 +58,7 @@ public class JavaLogicalNameExtractor extends MontoService {
             source,
             Products.LOGICAL_SOURCE_NAME,
             Languages.JAVA,
-            GsonMonto.toJsonTree(new Source(source.getPhysicalName(), logicalName))
-        );
+            GsonMonto.toJsonTree(new Source(source.getPhysicalName(), logicalName)));
       } else {
         System.err.println("JavaLogicalNameExtractor couldn't find class name for " + source);
       }

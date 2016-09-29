@@ -12,7 +12,7 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
 import monto.service.completion.Completion;
-import monto.service.completion.SourcePositionContent;
+import monto.service.completion.CompletionRequest;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
 import monto.service.gson.GsonMonto;
@@ -41,15 +41,14 @@ public class JavaCodeCompletion extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    if (commandMessage.getTag().equals(SourcePositionContent.TAG)) {
-      SourcePositionContent sourcePositionContent =
-          SourcePositionContent.fromCommandMessage(commandMessage);
+    if (commandMessage.getTag().equals(CompletionRequest.TAG)) {
+      CompletionRequest completionRequest = CompletionRequest.fromCommandMessage(commandMessage);
 
       Optional<SourceMessage> maybeSourceMessage =
-          commandMessage.getSourceMessage(sourcePositionContent.getSource());
+          commandMessage.getSourceMessage(completionRequest.getSource());
       Optional<ProductMessage> maybeProductMessage =
           commandMessage.getProductMessage(
-              sourcePositionContent.getSource(), Products.IDENTIFIER, Languages.JAVA);
+              completionRequest.getSource(), Products.IDENTIFIER, Languages.JAVA);
       if (maybeSourceMessage.isPresent() && maybeProductMessage.isPresent()) {
 
         // System.out.println("CommandMessage contains all dependencies.");
@@ -58,7 +57,7 @@ public class JavaCodeCompletion extends MontoService {
         List<Identifier> identifiers =
             GsonMonto.fromJsonArray(maybeProductMessage.get(), Identifier[].class);
 
-        int cursorPosition = sourcePositionContent.getSelection().getStartOffset();
+        int cursorPosition = completionRequest.getSelection().getStartOffset();
 
         // Find last non alphanumerical character before cursor position
         String textBeforeCursor =
@@ -102,10 +101,10 @@ public class JavaCodeCompletion extends MontoService {
         // Request dependencies
         Set<DynamicDependency> dependencies = new HashSet<>();
         dependencies.add(
-            DynamicDependency.sourceDependency(sourcePositionContent.getSource(), Languages.JAVA));
+            DynamicDependency.sourceDependency(completionRequest.getSource(), Languages.JAVA));
         dependencies.add(
             new DynamicDependency(
-                sourcePositionContent.getSource(),
+                completionRequest.getSource(),
                 JavaServices.IDENTIFIER_FINDER,
                 Products.IDENTIFIER,
                 Languages.JAVA));
