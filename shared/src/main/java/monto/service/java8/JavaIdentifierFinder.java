@@ -229,6 +229,9 @@ public class JavaIdentifierFinder extends MontoService {
                       imports.add(
                           getRightMostImportNameExpr(node.getChild(0)).extract(sourceCode)
                               + ".java");
+                      // TODO: horribly broken: Imported files are only <ClassName>.java
+                      // no package, project, or src directory is included
+                      // This will not work with the new Source type, that consists of physical and logical name
                       break;
                   }
                 }));
