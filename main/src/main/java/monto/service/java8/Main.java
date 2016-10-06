@@ -47,6 +47,8 @@ public class Main {
         .addOption("outline", false, "enable Java outliner")
         .addOption("codecompletion", false, "enable Java code completioner")
         .addOption("runner", false, "enable Java runtime service")
+        .addOption("debugger", false, "enable Java debugger service")
+        .addOption("logicalnames", false, "enable logical name extractor")
         .addOption("address", true, "address of services")
         .addOption("registration", true, "address of broker registration")
         .addOption("resources", true, "port for http resource server")
@@ -83,9 +85,14 @@ public class Main {
       services.add(new JavaIdentifierFinder(zmqConfig));
       services.add(new JavaCodeCompletion(zmqConfig));
     }
-    if (cmd.hasOption("runner")) {
+    if (cmd.hasOption("logicalnames")) {
       services.add(new JavaLogicalNameExtractor(zmqConfig));
+    }
+    if (cmd.hasOption("runner")) {
       services.add(new JavaRunner(zmqConfig));
+    }
+    if (cmd.hasOption("debugger")) {
+      services.add(new JavaDebugger(zmqConfig));
     }
     if (cmd.hasOption("debug")) {
       services.forEach(MontoService::enableDebugging);
