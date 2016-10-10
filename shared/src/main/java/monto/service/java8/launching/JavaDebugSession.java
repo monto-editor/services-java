@@ -17,6 +17,7 @@ import com.sun.jdi.request.EventRequestManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -97,14 +98,16 @@ public class JavaDebugSession {
 
   public void addBreakpoint(Breakpoint breakpoint)
       throws LogicalNameAbsentException, AbsentInformationException,
-          BreakpointNotAvailableException {
+      BreakpointNotAvailableException {
     if (!breakpoint.getSource().getLogicalName().isPresent()) {
       throw new LogicalNameAbsentException(breakpoint.getSource());
     }
     List<ReferenceType> referenceTypes =
         vm.classesByName(breakpoint.getSource().getLogicalName().get());
     if (referenceTypes.size() == 0) {
-      deferredBreakpoints.add(breakpoint);
+      synchronized (this) {
+        deferredBreakpoints.add(breakpoint);
+      }
     } else {
       installBreakpoint(breakpoint, referenceTypes.get(0));
     }
@@ -147,7 +150,7 @@ public class JavaDebugSession {
               0));
     } catch (
         IncompatibleThreadStateException | AbsentInformationException
-                | BreakpointNotAvailableException
+            | BreakpointNotAvailableException
             e) {
       asyncExceptionHandler.accept(e);
     }
@@ -159,42 +162,42 @@ public class JavaDebugSession {
     List<StackFrame> stackFrames = new ArrayList<>();
     for (com.sun.jdi.StackFrame jdiStackFrame : threadReference.frames()) {
       List<LocalVariable> jdiArguments = jdiStackFrame.location().method().arguments();
-      List<LocalVariable> jdiLocalVariables = jdiStackFrame.visibleVariables();
-      jdiLocalVariables.removeAll(jdiArguments);
+          List<LocalVariable> jdiLocalVariables = jdiStackFrame.visibleVariables();
+          jdiLocalVariables.removeAll(jdiArguments);
 
-      Map<LocalVariable, Value> jdiLocalValues = jdiStackFrame.getValues(jdiLocalVariables);
-      Map<LocalVariable, Value> jdiArgumentValues = jdiStackFrame.getValues(jdiArguments);
+          Map<LocalVariable, Value> jdiLocalValues = jdiStackFrame.getValues(jdiLocalVariables);
+          Map<LocalVariable, Value> jdiArgumentValues = jdiStackFrame.getValues(jdiArguments);
       ObjectReference jdiThisReference = jdiStackFrame.thisObject();
 
-      List<Variable> arguments =
-          jdiArgumentValues
-              .entrySet()
-              .stream()
-              .map(
-                  localValue
-                      -> new Variable(
+          List<Variable> arguments =
+              jdiArgumentValues
+                  .entrySet()
+                  .stream()
+                  .map(
+                      localValue
+                          -> new Variable(
                           localValue.getKey().name(),
                           localValue.getKey().typeName(),
                           localValue.getValue().toString(),
                           Variable.KIND_ARGUMENT))
-              .collect(Collectors.toList());
+                  .collect(Collectors.toList());
 
-      List<Variable> locals =
-          jdiLocalValues
-              .entrySet()
-              .stream()
-              .map(
-                  localValue
-                      -> new Variable(
+          List<Variable> locals =
+              jdiLocalValues
+                  .entrySet()
+                  .stream()
+                  .map(
+                      localValue
+                          -> new Variable(
                           localValue.getKey().name(),
                           localValue.getKey().typeName(),
                           localValue.getValue().toString(),
                           Variable.KIND_LOCAL))
-              .collect(Collectors.toList());
+                  .collect(Collectors.toList());
 
       List<Variable> stackVariables = new ArrayList<>();
-      stackVariables.addAll(arguments);
-      stackVariables.addAll(locals);
+          stackVariables.addAll(arguments);
+          stackVariables.addAll(locals);
 
       if (jdiThisReference != null) {
         Variable thiss =
@@ -212,16 +215,17 @@ public class JavaDebugSession {
     return new Thread(threadReference.name(), stackFrames, hitBreakpoint);
   }
 
-  private void onClassPrepareEvent(ClassPrepareEvent classPrepareEvent) {
+  private synchronized void onClassPrepareEvent(ClassPrepareEvent classPrepareEvent) {
     // register deferred breakpoints
     ReferenceType referenceType = classPrepareEvent.referenceType();
 
-    for (Breakpoint deferredBreakpoint : deferredBreakpoints) {
+    for (Iterator<Breakpoint> iterator = deferredBreakpoints.iterator(); iterator.hasNext(); ) {
+      Breakpoint deferredBreakpoint = iterator.next();
       Optional<String> mayBeLogicalName = deferredBreakpoint.getSource().getLogicalName();
       if (mayBeLogicalName.isPresent() && referenceType.name().equals(mayBeLogicalName.get())) {
         try {
           installBreakpoint(deferredBreakpoint, referenceType);
-          deferredBreakpoints.remove(deferredBreakpoint);
+          iterator.remove();
         } catch (AbsentInformationException | BreakpointNotAvailableException e) {
           asyncExceptionHandler.accept(e);
         }
