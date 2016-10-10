@@ -77,7 +77,7 @@ public class ProcessTerminationThread extends Thread {
               sourceServiceId,
               Products.PROCESS_TERMINATED,
               Languages.JAVA,
-              GsonMonto.toJsonTree(new ProcessTerminated(process.exitValue(), session)),
+              GsonMonto.toJsonTree(new ProcessTerminated(process.exitValue())),
               0));
 
       System.out.println("Sent PROCESS_TERMINATED product with exit code " + process.exitValue());

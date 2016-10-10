@@ -57,7 +57,7 @@ public class InputStreamProductThread extends Thread {
                   sourceServiceId,
                   Products.STREAM_OUTPUT,
                   Languages.JAVA,
-                  GsonMonto.toJsonTree(new StreamOutput(sourceStream, data, session)),
+                  GsonMonto.toJsonTree(new StreamOutput(sourceStream, data)),
                   0));
           log(System.out, "read some data: " + StringEscapeUtils.escapeJava(data));
         }
