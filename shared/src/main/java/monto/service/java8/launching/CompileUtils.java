@@ -49,8 +49,8 @@ public class CompileUtils {
 
     Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(file);
     JavaCompiler.CompilationTask task =
-        compiler.getTask(
-            null, null, diagnostics, Arrays.asList("-d", outputDirectory), null, compilationUnits);
+        compiler.getTask(null, null, diagnostics, Arrays.asList("-g", "-d", outputDirectory), null,
+            compilationUnits);
 
     boolean success = task.call();
     for (Diagnostic diagnostic : diagnostics.getDiagnostics()) {
