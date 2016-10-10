@@ -4,6 +4,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.LocalVariable;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.ThreadReference;
@@ -161,13 +162,18 @@ public class JavaDebugSession {
       throws IncompatibleThreadStateException, AbsentInformationException {
     List<StackFrame> stackFrames = new ArrayList<>();
     for (com.sun.jdi.StackFrame jdiStackFrame : threadReference.frames()) {
-      List<LocalVariable> jdiArguments = jdiStackFrame.location().method().arguments();
+      List<Variable> stackVariables = new ArrayList<>();
+      ObjectReference jdiThisReference = jdiStackFrame.thisObject();
+
+      Method method = jdiStackFrame.location().method();
+      if (!method.isNative()) {
+        try {
+          List<LocalVariable> jdiArguments = method.arguments();
           List<LocalVariable> jdiLocalVariables = jdiStackFrame.visibleVariables();
           jdiLocalVariables.removeAll(jdiArguments);
 
           Map<LocalVariable, Value> jdiLocalValues = jdiStackFrame.getValues(jdiLocalVariables);
           Map<LocalVariable, Value> jdiArgumentValues = jdiStackFrame.getValues(jdiArguments);
-      ObjectReference jdiThisReference = jdiStackFrame.thisObject();
 
           List<Variable> arguments =
               jdiArgumentValues
@@ -195,9 +201,15 @@ public class JavaDebugSession {
                           Variable.KIND_LOCAL))
                   .collect(Collectors.toList());
 
-      List<Variable> stackVariables = new ArrayList<>();
           stackVariables.addAll(arguments);
           stackVariables.addAll(locals);
+        } catch (AbsentInformationException e) {
+          // Locals and arguments can't be extracted, because debugging information is missing.
+          // There is no possibility to make sure this information is available from the JDI API,
+          // so try catch is necessary. This exception is thrown, when threads are currently in
+          // Java API classes, such as java.lang.*.
+        }
+      }
 
       if (jdiThisReference != null) {
         Variable thiss =
