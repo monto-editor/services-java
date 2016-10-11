@@ -99,7 +99,7 @@ public class JavaDebugSession {
 
   public void addBreakpoint(Breakpoint breakpoint)
       throws LogicalNameAbsentException, AbsentInformationException,
-      BreakpointNotAvailableException {
+          BreakpointNotAvailableException {
     if (!breakpoint.getSource().getLogicalName().isPresent()) {
       throw new LogicalNameAbsentException(breakpoint.getSource());
     }
@@ -137,8 +137,7 @@ public class JavaDebugSession {
       }
       HitBreakpoint hitBreakpointProduct =
           new HitBreakpoint(
-              convertJdiThreadTreeToMontoThreadTree(jdiHitThread, hitBreakpoint),
-              otherThreads);
+              convertJdiThreadTreeToMontoThreadTree(jdiHitThread, hitBreakpoint), otherThreads);
 
       onProductMessage.accept(
           new ProductMessage(
@@ -151,7 +150,7 @@ public class JavaDebugSession {
               0));
     } catch (
         IncompatibleThreadStateException | AbsentInformationException
-            | BreakpointNotAvailableException
+                | BreakpointNotAvailableException
             e) {
       asyncExceptionHandler.accept(e);
     }
@@ -182,10 +181,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                          localValue.getKey().name(),
-                          localValue.getKey().typeName(),
-                          localValue.getValue().toString(),
-                          Variable.KIND_ARGUMENT))
+                              localValue.getKey().name(),
+                              localValue.getKey().typeName(),
+                              localValue.getValue().toString(),
+                              Variable.KIND_ARGUMENT))
                   .collect(Collectors.toList());
 
           List<Variable> locals =
@@ -195,10 +194,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                          localValue.getKey().name(),
-                          localValue.getKey().typeName(),
-                          localValue.getValue().toString(),
-                          Variable.KIND_LOCAL))
+                              localValue.getKey().name(),
+                              localValue.getKey().typeName(),
+                              localValue.getValue().toString(),
+                              Variable.KIND_LOCAL))
                   .collect(Collectors.toList());
 
           stackVariables.addAll(arguments);

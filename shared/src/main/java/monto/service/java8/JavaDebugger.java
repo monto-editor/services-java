@@ -58,7 +58,7 @@ public class JavaDebugger extends MontoService {
             new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA),
             new ProductDescription(Products.HIT_BREAKPOINT, Languages.JAVA)
             //TODO more products here
-        ),
+            ),
         options(),
         dependencies());
 
@@ -89,7 +89,7 @@ public class JavaDebugger extends MontoService {
       }
     } catch (
         IOException | BreakpointNotAvailableException | LogicalNameAbsentException
-            | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException
+                | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException
             e) {
       sendExceptionErrorProduct(e);
     }
@@ -102,7 +102,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleAddBreakpoint(CommandMessage commandMessage)
       throws AbsentInformationException, LogicalNameAbsentException,
-      BreakpointNotAvailableException {
+          BreakpointNotAvailableException {
     // TODO null checks
     AddBreakpoint addBreakpoint = AddBreakpoint.fromCommandMessage(commandMessage);
     JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
@@ -111,7 +111,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleLaunchCommandMessage(CommandMessage commandMessage)
       throws IllegalConnectorArgumentsException, VMStartException, IOException,
-      AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
+          AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
 
     DebugLaunchConfiguration debugLaunchConfiguration =
         DebugLaunchConfiguration.fromCommandMessage(commandMessage);
