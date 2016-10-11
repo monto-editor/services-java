@@ -69,7 +69,7 @@ public class JavaRunner extends MontoService {
         if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
           // TODO: send error product instead
           System.err.println(
-              mainClassSourceMessage
+              mainClassSourceMessage.getSource()
                   + " doesn't have a logical name.\n"
                   + "JavaRunner needs that to run the class");
         } else {
