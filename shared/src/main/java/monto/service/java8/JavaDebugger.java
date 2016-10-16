@@ -73,24 +73,27 @@ public class JavaDebugger extends MontoService {
 
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
-    String tag = commandMessage.getTag();
     try {
-      switch (tag) {
-        case DebugLaunchConfiguration.TAG:
-          handleLaunchCommandMessage(commandMessage);
-          break;
-        case TerminateProcess.TAG:
-          handleTerminationCommandMessage(commandMessage);
-          break;
-        case AddBreakpoint.TAG:
-          handleAddBreakpoint(commandMessage);
-          break;
-        case ResumeDebugging.TAG:
-          handleResumeDebugging(commandMessage);
-          break;
-        default:
-          System.out.println("JavaDebugger received unexpected CommandMessage with tag " + tag);
-          break;
+      Command command = commandMessage.getCommand();
+      if (command.equals(Commands.DEBUG_LAUNCH_CONFIGURATION)) {
+        handleLaunchCommandMessage(commandMessage);
+      } else {
+        if (debugSessionMap.containsKey(commandMessage.getSession())) {
+          if (command.equals(Commands.TERMINATE_PROCESS)) {
+            // TODO // TODO TERMINATE_DEBUG_PROCESS?
+            handleTerminationCommandMessage(commandMessage);
+
+          } else if (command.equals(Commands.ADD_BREAKPOINT)) {
+            handleAddBreakpoint(commandMessage);
+
+          } else if (command.equals(Commands.RESUME_DEBUGGING)) {
+            handleResumeDebugging(commandMessage);
+
+          } else {
+            System.out.println(
+                "JavaDebugger received unexpected CommandMessage with command " + command);
+          }
+        }
       }
     } catch (
         IOException | BreakpointNotAvailableException | LogicalNameAbsentException
@@ -109,9 +112,9 @@ public class JavaDebugger extends MontoService {
       throws AbsentInformationException, LogicalNameAbsentException,
           BreakpointNotAvailableException {
     // TODO null checks
-    AddBreakpoint addBreakpoint = AddBreakpoint.fromCommandMessage(commandMessage);
+    Breakpoint breakpoint = GsonMonto.fromJson(commandMessage.getContents(), Breakpoint.class);
     JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
-    debugSession.addBreakpoint(addBreakpoint.getBreakpoint());
+    debugSession.addBreakpoint(breakpoint);
   }
 
   private void handleLaunchCommandMessage(CommandMessage commandMessage)
@@ -119,133 +122,130 @@ public class JavaDebugger extends MontoService {
           AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
 
     DebugLaunchConfiguration debugLaunchConfiguration =
-        DebugLaunchConfiguration.fromCommandMessage(commandMessage);
+        GsonMonto.fromJson(commandMessage.getContents(), DebugLaunchConfiguration.class);
 
     // TODO: declare dependencies on imported files or project dependency
-    if (debugLaunchConfiguration.getMode().equals("debug")) {
-      Optional<SourceMessage> maybeMainClassSourceMessage =
-          commandMessage.getSourceMessage(debugLaunchConfiguration.getMainClassSource());
-      if (!maybeMainClassSourceMessage.isPresent()) {
-        Set<DynamicDependency> dependencies = new HashSet<>();
-        dependencies.add(
-            DynamicDependency.sourceDependency(
-                debugLaunchConfiguration.getMainClassSource(), Languages.JAVA));
-        registerCommandMessageDependencies(
-            new RegisterCommandMessageDependencies(commandMessage, dependencies));
+    Optional<SourceMessage> maybeMainClassSourceMessage =
+        commandMessage.getSourceMessage(debugLaunchConfiguration.getMainClassSource());
+    if (!maybeMainClassSourceMessage.isPresent()) {
+      Set<DynamicDependency> dependencies = new HashSet<>();
+      dependencies.add(
+          DynamicDependency.sourceDependency(
+              debugLaunchConfiguration.getMainClassSource(), Languages.JAVA));
+      registerCommandMessageDependencies(
+          new RegisterCommandMessageDependencies(commandMessage, dependencies));
+    } else {
+      SourceMessage mainClassSourceMessage = maybeMainClassSourceMessage.get();
+      if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
+        // TODO: send error product instead
+        System.err.println(
+            mainClassSourceMessage
+                + " doesn't have a logical name.\n"
+                + "JavaDebugger needs that to run the class");
       } else {
-        SourceMessage mainClassSourceMessage = maybeMainClassSourceMessage.get();
-        if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
-          // TODO: send error product instead
-          System.err.println(
-              mainClassSourceMessage
-                  + " doesn't have a logical name.\n"
-                  + "JavaDebugger needs that to run the class");
-        } else {
-          Path compileDirectory = Files.createTempDirectory(null);
-          Path workingDirectory = Files.createTempDirectory(null);
+        Path compileDirectory = Files.createTempDirectory(null);
+        Path workingDirectory = Files.createTempDirectory(null);
 
-          CompileUtils.compileJavaClass(
-              mainClassSourceMessage.getSource().getPhysicalName(),
-              mainClassSourceMessage.getContents(),
-              compileDirectory.toAbsolutePath().toString());
+        CompileUtils.compileJavaClass(
+            mainClassSourceMessage.getSource().getPhysicalName(),
+            mainClassSourceMessage.getContents(),
+            compileDirectory.toAbsolutePath().toString());
 
-          Map<String, Connector.Argument> connectorArguments = connector.defaultArguments();
+        Map<String, Connector.Argument> connectorArguments = connector.defaultArguments();
 
-          // Arguments for SunCommandLineLauncher are documented at
-          // http://docs.oracle.com/javase/8/docs/technotes/guides/jpda/conninv.html#sunlaunch
+        // Arguments for SunCommandLineLauncher are documented at
+        // http://docs.oracle.com/javase/8/docs/technotes/guides/jpda/conninv.html#sunlaunch
 
-          Connector.Argument mainArgument = connectorArguments.get("main");
-          mainArgument.setValue(mainClassSourceMessage.getSource().getLogicalName().get());
+        Connector.Argument mainArgument = connectorArguments.get("main");
+        mainArgument.setValue(mainClassSourceMessage.getSource().getLogicalName().get());
 
-          Connector.Argument optionsArgument = connectorArguments.get("options");
-          optionsArgument.setValue(
-              "-classpath \""
-                  + compileDirectory.toAbsolutePath().toString()
-                  + "\" "
-                  + "-Duser.dir=\""
-                  + workingDirectory.toAbsolutePath().toString()
-                  + "\"");
-          // TODO: user.dir for setting the working directory doesn't work in all cases
-          // It does work when using the File class with relative paths, but FileOutputStream ignores
-          // this setting. JDI (more specifically SunCommandLineLauncher) sadly doesn't allow
-          // specification of the working directory. They internally use a ProcessBuilder, but the
-          // working directory parameter is not settable.
-          // Fix: Don't use SunCommandLineLauncher, but start own process and use an AttachingLauncher.
+        Connector.Argument optionsArgument = connectorArguments.get("options");
+        optionsArgument.setValue(
+            "-classpath \""
+                + compileDirectory.toAbsolutePath().toString()
+                + "\" "
+                + "-Duser.dir=\""
+                + workingDirectory.toAbsolutePath().toString()
+                + "\"");
+        // TODO: user.dir for setting the working directory doesn't work in all cases
+        // It does work when using the File class with relative paths, but FileOutputStream ignores
+        // this setting. JDI (more specifically SunCommandLineLauncher) sadly doesn't allow
+        // specification of the working directory. They internally use a ProcessBuilder, but the
+        // working directory parameter is not settable.
+        // Fix: Don't use SunCommandLineLauncher, but start own process and use an AttachingLauncher.
 
-          // Suspend is true by default, but we still set it here, in case it ever changes
-          // This suspends the vm just before the main class is loaded
-          // This is useful, because all listeners can be attached, before the main class starts running
-          // vm.resume() starts execution, once everything is ready
-          Connector.Argument suspendArgument = connectorArguments.get("suspend");
-          suspendArgument.setValue("true");
+        // Suspend is true by default, but we still set it here, in case it ever changes
+        // This suspends the vm just before the main class is loaded
+        // This is useful, because all listeners can be attached, before the main class starts running
+        // vm.resume() starts execution, once everything is ready
+        Connector.Argument suspendArgument = connectorArguments.get("suspend");
+        suspendArgument.setValue("true");
 
-          VirtualMachine vm = connector.launch(connectorArguments);
-          // Disable all prints to System.out and System.err on the Monto service vm,
-          // not the just created vm
-          vm.setDebugTraceMode(VirtualMachine.TRACE_NONE);
+        VirtualMachine vm = connector.launch(connectorArguments);
+        // Disable all prints to System.out and System.err on the Monto service vm,
+        // not the just created vm
+        vm.setDebugTraceMode(VirtualMachine.TRACE_NONE);
 
-          EventRequestManager eventRequestManager = vm.eventRequestManager();
-          ClassPrepareRequest classPrepareRequest = eventRequestManager.createClassPrepareRequest();
-          classPrepareRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-          classPrepareRequest.enable();
+        EventRequestManager eventRequestManager = vm.eventRequestManager();
+        ClassPrepareRequest classPrepareRequest = eventRequestManager.createClassPrepareRequest();
+        classPrepareRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+        classPrepareRequest.enable();
 
-          EventQueueReaderThread eventQueueReaderThread =
-              new EventQueueReaderThread(vm.eventQueue());
-          eventQueueReaderThread.start();
+        EventQueueReaderThread eventQueueReaderThread = new EventQueueReaderThread(vm.eventQueue());
+        eventQueueReaderThread.start();
 
-          Process process = vm.process();
-          int sessionId = commandMessage.getSession();
+        Process process = vm.process();
+        int sessionId = commandMessage.getSession();
 
-          InputStreamProductThread stdoutThread =
-              new InputStreamProductThread(
-                  StreamOutput.SourceStream.OUT,
-                  "debug",
-                  sessionId,
-                  process.getInputStream(),
-                  getServiceId(),
-                  this::sendProductMessage);
-          InputStreamProductThread stderrThread =
-              new InputStreamProductThread(
-                  StreamOutput.SourceStream.ERR,
-                  "debug",
-                  sessionId,
-                  process.getErrorStream(),
-                  getServiceId(),
-                  this::sendProductMessage);
+        InputStreamProductThread stdoutThread =
+            new InputStreamProductThread(
+                StreamOutput.SourceStream.OUT,
+                "debug",
+                sessionId,
+                process.getInputStream(),
+                getServiceId(),
+                this::sendProductMessage);
+        InputStreamProductThread stderrThread =
+            new InputStreamProductThread(
+                StreamOutput.SourceStream.ERR,
+                "debug",
+                sessionId,
+                process.getErrorStream(),
+                getServiceId(),
+                this::sendProductMessage);
 
-          stdoutThread.start();
-          stderrThread.start();
+        stdoutThread.start();
+        stderrThread.start();
 
-          ProcessTerminationThread processTerminationThread =
-              new ProcessTerminationThread(
-                  process,
-                  "debug",
-                  sessionId,
-                  stdoutThread,
-                  stderrThread,
-                  workingDirectory,
-                  getServiceId(),
-                  this::sendProductMessage);
+        ProcessTerminationThread processTerminationThread =
+            new ProcessTerminationThread(
+                process,
+                "debug",
+                sessionId,
+                stdoutThread,
+                stderrThread,
+                workingDirectory,
+                getServiceId(),
+                this::sendProductMessage);
 
-          processTerminationThread.start();
+        processTerminationThread.start();
 
-          JavaDebugSession debugSession =
-              new JavaDebugSession(
-                  sessionId,
-                  vm,
-                  processTerminationThread,
-                  eventQueueReaderThread,
-                  this::sendProductMessage,
-                  this::sendExceptionErrorProduct);
+        JavaDebugSession debugSession =
+            new JavaDebugSession(
+                sessionId,
+                vm,
+                processTerminationThread,
+                eventQueueReaderThread,
+                this::sendProductMessage,
+                this::sendExceptionErrorProduct);
 
-          for (Breakpoint breakpoint : debugLaunchConfiguration.getBreakpoints()) {
-            debugSession.addBreakpoint(breakpoint);
-          }
-
-          debugSessionMap.put(sessionId, debugSession);
-
-          vm.resume();
+        for (Breakpoint breakpoint : debugLaunchConfiguration.getBreakpoints()) {
+          debugSession.addBreakpoint(breakpoint);
         }
+
+        debugSessionMap.put(sessionId, debugSession);
+
+        vm.resume();
       }
     }
   }

@@ -50,10 +50,12 @@ public class JavaRunner extends MontoService {
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
     try {
-      if (commandMessage.getTag().equals(LaunchConfiguration.TAG)) {
+      if (commandMessage.getCommand().equals(Commands.RUN_LAUNCH_CONFIGURATION)) {
         handleLaunchCommandMessage(commandMessage);
-      } else if (commandMessage.getTag().equals(TerminateProcess.TAG)) {
-        handleTerminationCommandMessage(commandMessage);
+      } else if (commandMessage.getCommand().equals(Commands.TERMINATE_PROCESS)) {
+        if (processThreadMap.containsKey(commandMessage.getSession())) {
+          handleTerminationCommandMessage(commandMessage);
+        }
       }
     } catch (IOException e) {
       sendExceptionErrorProduct(e);
@@ -62,78 +64,76 @@ public class JavaRunner extends MontoService {
 
   private void handleLaunchCommandMessage(CommandMessage commandMessage) throws IOException {
     LaunchConfiguration launchConfiguration =
-        LaunchConfiguration.fromCommandMessage(commandMessage);
+        GsonMonto.fromJson(commandMessage.getContents(), LaunchConfiguration.class);
     Optional<SourceMessage> maybeMainClassSourceMessage =
         commandMessage.getSourceMessage(launchConfiguration.getMainClassSource());
     // TODO: declare dependencies on imported files
-    if (launchConfiguration.getMode().equals("run")) {
-      if (maybeMainClassSourceMessage.isPresent()) {
-        SourceMessage mainClassSourceMessage = maybeMainClassSourceMessage.get();
+    if (maybeMainClassSourceMessage.isPresent()) {
+      SourceMessage mainClassSourceMessage = maybeMainClassSourceMessage.get();
 
-        if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
-          // TODO: send error product instead
-          System.err.println(
-              mainClassSourceMessage.getSource()
-                  + " doesn't have a logical name.\n"
-                  + "JavaRunner needs that to run the class");
-        } else {
-          Path compileDirectory = Files.createTempDirectory(null);
-
-          CompileUtils.compileJavaClass(
-              mainClassSourceMessage.getSource().getPhysicalName(),
-              mainClassSourceMessage.getContents(),
-              compileDirectory.toAbsolutePath().toString());
-
-          Process process =
-              Runtime.getRuntime()
-                  .exec(
-                      "java " + mainClassSourceMessage.getSource().getLogicalName().get(),
-                      new String[0],
-                      compileDirectory.toFile());
-
-          InputStreamProductThread stdoutThread =
-              new InputStreamProductThread(
-                  StreamOutput.SourceStream.OUT,
-                  "run",
-                  commandMessage.getSession(),
-                  process.getInputStream(),
-                  getServiceId(),
-                  this::sendProductMessage);
-          InputStreamProductThread stderrThread =
-              new InputStreamProductThread(
-                  StreamOutput.SourceStream.ERR,
-                  "run",
-                  commandMessage.getSession(),
-                  process.getErrorStream(),
-                  getServiceId(),
-                  this::sendProductMessage);
-
-          stdoutThread.start();
-          stderrThread.start();
-
-          ProcessTerminationThread processTerminationThread =
-              new ProcessTerminationThread(
-                  process,
-                  "run",
-                  commandMessage.getSession(),
-                  stdoutThread,
-                  stderrThread,
-                  compileDirectory,
-                  getServiceId(),
-                  this::sendProductMessage);
-
-          processThreadMap.put(commandMessage.getSession(), processTerminationThread);
-
-          processTerminationThread.start();
-        }
+      if (!mainClassSourceMessage.getSource().getLogicalName().isPresent()) {
+        // TODO: send error product instead
+        System.err.println(
+            mainClassSourceMessage.getSource()
+                + " doesn't have a logical name.\n"
+                + "JavaRunner needs that to run the class");
       } else {
-        Set<DynamicDependency> dependencies = new HashSet<>();
-        dependencies.add(
-            DynamicDependency.sourceDependency(
-                launchConfiguration.getMainClassSource(), Languages.JAVA));
-        registerCommandMessageDependencies(
-            new RegisterCommandMessageDependencies(commandMessage, dependencies));
+        Path compileDirectory = Files.createTempDirectory(null);
+
+        CompileUtils.compileJavaClass(
+            mainClassSourceMessage.getSource().getPhysicalName(),
+            mainClassSourceMessage.getContents(),
+            compileDirectory.toAbsolutePath().toString());
+
+        Process process =
+            Runtime.getRuntime()
+                .exec(
+                    "java " + mainClassSourceMessage.getSource().getLogicalName().get(),
+                    new String[0],
+                    compileDirectory.toFile());
+
+        InputStreamProductThread stdoutThread =
+            new InputStreamProductThread(
+                StreamOutput.SourceStream.OUT,
+                "run",
+                commandMessage.getSession(),
+                process.getInputStream(),
+                getServiceId(),
+                this::sendProductMessage);
+        InputStreamProductThread stderrThread =
+            new InputStreamProductThread(
+                StreamOutput.SourceStream.ERR,
+                "run",
+                commandMessage.getSession(),
+                process.getErrorStream(),
+                getServiceId(),
+                this::sendProductMessage);
+
+        stdoutThread.start();
+        stderrThread.start();
+
+        ProcessTerminationThread processTerminationThread =
+            new ProcessTerminationThread(
+                process,
+                "run",
+                commandMessage.getSession(),
+                stdoutThread,
+                stderrThread,
+                compileDirectory,
+                getServiceId(),
+                this::sendProductMessage);
+
+        processThreadMap.put(commandMessage.getSession(), processTerminationThread);
+
+        processTerminationThread.start();
       }
+    } else {
+      Set<DynamicDependency> dependencies = new HashSet<>();
+      dependencies.add(
+          DynamicDependency.sourceDependency(
+              launchConfiguration.getMainClassSource(), Languages.JAVA));
+      registerCommandMessageDependencies(
+          new RegisterCommandMessageDependencies(commandMessage, dependencies));
     }
   }
 
