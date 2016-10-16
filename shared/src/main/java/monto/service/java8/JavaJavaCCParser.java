@@ -3,18 +3,13 @@ package monto.service.java8;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseException;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.body.*;
-import monto.service.MontoService;
-import monto.service.ZMQConfiguration;
-import monto.service.ast.ASTNode;
-import monto.service.gson.GsonMonto;
-import monto.service.product.Products;
-import monto.service.region.IRegion;
-import monto.service.region.Region;
-import monto.service.registration.SourceDependency;
-import monto.service.request.Request;
-import monto.service.source.SourceMessage;
-import monto.service.types.Languages;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
+import com.github.javaparser.ast.body.EnumConstantDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.ModifierSet;
+import com.github.javaparser.ast.body.TypeDeclaration;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -22,6 +17,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import monto.service.MontoService;
+import monto.service.ZMQConfiguration;
+import monto.service.ast.ASTNode;
+import monto.service.gson.GsonMonto;
+import monto.service.product.Products;
+import monto.service.region.IRegion;
+import monto.service.region.Region;
+import monto.service.registration.ProductDescription;
+import monto.service.registration.SourceDependency;
+import monto.service.request.Request;
+import monto.service.source.SourceMessage;
+import monto.service.types.Languages;
 
 public class JavaJavaCCParser extends MontoService {
 
@@ -31,10 +38,10 @@ public class JavaJavaCCParser extends MontoService {
         JavaServices.JAVACC_PARSER,
         "JavaCC Parser",
         "A parser that produces an AST for Java using JavaCC",
-        Languages.JAVA,
-        Products.AST,
+        productDescriptions(new ProductDescription(Products.AST, Languages.JAVA)),
         options(),
-        dependencies(new SourceDependency(Languages.JAVA)));
+        dependencies(new SourceDependency(Languages.JAVA)),
+        commands());
   }
 
   @Override

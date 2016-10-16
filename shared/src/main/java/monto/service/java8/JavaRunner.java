@@ -3,7 +3,6 @@ package monto.service.java8;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,15 +11,17 @@ import java.util.Set;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
+import monto.service.command.Commands;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
+import monto.service.gson.GsonMonto;
 import monto.service.java8.launching.CompileUtils;
 import monto.service.java8.launching.InputStreamProductThread;
 import monto.service.java8.launching.ProcessTerminationThread;
 import monto.service.launching.LaunchConfiguration;
 import monto.service.launching.StreamOutput;
-import monto.service.launching.TerminateProcess;
 import monto.service.product.Products;
+import monto.service.registration.CommandDescription;
 import monto.service.registration.ProductDescription;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
@@ -34,11 +35,14 @@ public class JavaRunner extends MontoService {
         JavaServices.RUNNER,
         "Java runtime service",
         "Compiles and runs sources via CommandMessages and reports back stdout and stderr",
-        Arrays.asList(
+        productDescriptions(
             new ProductDescription(Products.STREAM_OUTPUT, Languages.JAVA),
             new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA)),
         options(),
-        dependencies());
+        dependencies(),
+        commands(
+            new CommandDescription(Commands.TERMINATE_PROCESS, Languages.JAVA),
+            new CommandDescription(Commands.RUN_LAUNCH_CONFIGURATION, Languages.JAVA)));
 
     processThreadMap = new HashMap<>();
   }

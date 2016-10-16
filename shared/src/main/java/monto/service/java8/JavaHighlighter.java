@@ -1,10 +1,12 @@
 package monto.service.java8;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.apache.commons.lang3.text.WordUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.configuration.BooleanOption;
@@ -19,13 +21,11 @@ import monto.service.highlighting.Token;
 import monto.service.highlighting.TokenCategory;
 import monto.service.java8.antlr.Java8Lexer;
 import monto.service.product.Products;
+import monto.service.registration.ProductDescription;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
-
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.apache.commons.lang3.text.WordUtils;
 
 @SuppressWarnings("rawtypes")
 public class JavaHighlighter extends MontoService {
@@ -55,10 +55,10 @@ public class JavaHighlighter extends MontoService {
         JavaServices.HIGHLIGHTER,
         "Java Syntax Highlighter",
         "A syntax highlighting service for Java that uses ANTLR for tokenizing",
-        Languages.JAVA,
-        Products.TOKENS,
+        productDescriptions(new ProductDescription(Products.TOKENS, Languages.JAVA)),
         options,
-        dependencies(new SourceDependency(Languages.JAVA)));
+        dependencies(new SourceDependency(Languages.JAVA)),
+        commands());
   }
 
   @Override

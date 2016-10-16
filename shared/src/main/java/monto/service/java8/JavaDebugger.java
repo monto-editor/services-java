@@ -14,7 +14,6 @@ import com.sun.jdi.request.EventRequestManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,8 +22,10 @@ import java.util.Set;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
+import monto.service.command.Commands;
 import monto.service.dependency.DynamicDependency;
 import monto.service.dependency.RegisterCommandMessageDependencies;
+import monto.service.gson.GsonMonto;
 import monto.service.java8.launching.CompileUtils;
 import monto.service.java8.launching.EventQueueReaderThread;
 import monto.service.java8.launching.InputStreamProductThread;
@@ -32,15 +33,14 @@ import monto.service.java8.launching.JavaDebugSession;
 import monto.service.java8.launching.ProcessTerminationThread;
 import monto.service.launching.DebugLaunchConfiguration;
 import monto.service.launching.StreamOutput;
-import monto.service.launching.TerminateProcess;
-import monto.service.launching.debug.AddBreakpoint;
 import monto.service.launching.debug.Breakpoint;
 import monto.service.launching.debug.BreakpointNotAvailableException;
-import monto.service.launching.debug.ResumeDebugging;
 import monto.service.product.Products;
+import monto.service.registration.CommandDescription;
 import monto.service.registration.ProductDescription;
 import monto.service.source.LogicalNameAbsentException;
 import monto.service.source.SourceMessage;
+import monto.service.types.Command;
 import monto.service.types.Languages;
 
 public class JavaDebugger extends MontoService {
@@ -53,14 +53,19 @@ public class JavaDebugger extends MontoService {
         JavaServices.DEBUGGER,
         "Java debugger service",
         "Compiles and debugs sources via CommandMessages and reports output and events",
-        Arrays.asList(
+        productDescriptions(
             new ProductDescription(Products.STREAM_OUTPUT, Languages.JAVA),
             new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA),
             new ProductDescription(Products.HIT_BREAKPOINT, Languages.JAVA)
             //TODO more products here
             ),
         options(),
-        dependencies());
+        dependencies(),
+        commands(
+            new CommandDescription(Commands.DEBUG_LAUNCH_CONFIGURATION, Languages.JAVA),
+            new CommandDescription(Commands.TERMINATE_PROCESS, Languages.JAVA),
+            new CommandDescription(Commands.ADD_BREAKPOINT, Languages.JAVA),
+            new CommandDescription(Commands.RESUME_DEBUGGING, Languages.JAVA)));
 
     connector = Bootstrap.virtualMachineManager().defaultConnector();
     debugSessionMap = new HashMap<>();

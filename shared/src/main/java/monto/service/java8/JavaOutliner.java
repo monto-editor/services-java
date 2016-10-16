@@ -1,5 +1,11 @@
 package monto.service.java8;
 
+import java.net.URL;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
@@ -10,18 +16,12 @@ import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.IRegion;
 import monto.service.registration.ProductDependency;
+import monto.service.registration.ProductDescription;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 import monto.service.types.ParseException;
-
-import java.net.URL;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class JavaOutliner extends MontoService {
 
@@ -31,12 +31,12 @@ public class JavaOutliner extends MontoService {
         JavaServices.OUTLINER,
         "Outline",
         "An outline service for Java",
-        Languages.JAVA,
-        Products.OUTLINE,
+        productDescriptions(new ProductDescription(Products.OUTLINE, Languages.JAVA)),
         options(),
         dependencies(
             new SourceDependency(Languages.JAVA),
-            new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)));
+            new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)),
+        commands());
   }
 
   @Override

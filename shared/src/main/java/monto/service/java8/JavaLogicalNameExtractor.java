@@ -7,6 +7,7 @@ import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.gson.GsonMonto;
 import monto.service.product.Products;
+import monto.service.registration.ProductDescription;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
@@ -20,10 +21,10 @@ public class JavaLogicalNameExtractor extends MontoService {
         JavaServices.LOGICAL_NAME_EXTRACTOR,
         "JavaLogicalNameExtractor",
         "Extracts the qualified package and class name for every Java Source",
-        Languages.JAVA,
-        Products.LOGICAL_SOURCE_NAME,
+        productDescriptions(new ProductDescription(Products.LOGICAL_SOURCE_NAME, Languages.JAVA)),
         options(),
-        dependencies(new SourceDependency(Languages.JAVA)));
+        dependencies(new SourceDependency(Languages.JAVA)),
+        commands());
   }
 
   // TODO enums and interface not covered

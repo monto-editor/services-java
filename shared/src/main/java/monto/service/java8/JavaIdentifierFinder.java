@@ -23,6 +23,7 @@ import monto.service.product.Products;
 import monto.service.region.IRegion;
 import monto.service.region.Region;
 import monto.service.registration.ProductDependency;
+import monto.service.registration.ProductDescription;
 import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
@@ -106,8 +107,7 @@ public class JavaIdentifierFinder extends MontoService {
         JavaServices.IDENTIFIER_FINDER,
         "Identifier Finder",
         "Tries to find identifiers from AST, but can also find codewords from source message, if AST is not available",
-        Languages.JAVA,
-        Products.IDENTIFIER,
+        productDescriptions(new ProductDescription(Products.IDENTIFIER, Languages.JAVA)),
         options(
             new BooleanOption(
                 OPTION_ID_FILTER_OUT_KEYWORDS,
@@ -117,7 +117,8 @@ public class JavaIdentifierFinder extends MontoService {
                 OPTION_ID_SORT_IDENTIFIERS, "Sort identifiers alphabetically", false)),
         dependencies(
             new SourceDependency(Languages.JAVA),
-            new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)));
+            new ProductDependency(JavaServices.JAVACC_PARSER, Products.AST, Languages.JAVA)),
+        commands());
   }
 
   @SuppressWarnings("rawtypes")

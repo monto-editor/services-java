@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.command.CommandMessage;
+import monto.service.command.Commands;
 import monto.service.completion.Completion;
 import monto.service.completion.CompletionRequest;
 import monto.service.dependency.DynamicDependency;
@@ -20,6 +21,7 @@ import monto.service.identifier.Identifier;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
 import monto.service.region.Region;
+import monto.service.registration.ProductDescription;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
 
@@ -31,18 +33,19 @@ public class JavaCodeCompletion extends MontoService {
         JavaServices.CODE_COMPLETION,
         "Code Completion",
         "A code completion service for Java",
-        Languages.JAVA,
-        Products.COMPLETIONS,
+        productDescriptions(new ProductDescription(Products.COMPLETIONS, Languages.JAVA)),
         options(),
-        dependencies());
+        dependencies(),
+        commands());
   }
 
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    if (commandMessage.getTag().equals(CompletionRequest.TAG)) {
-      CompletionRequest completionRequest = CompletionRequest.fromCommandMessage(commandMessage);
+    if (commandMessage.getCommand().equals(Commands.CODE_COMPLETION_REQUEST)) {
+      CompletionRequest completionRequest =
+          GsonMonto.fromJson(commandMessage.getContents(), CompletionRequest.class);
 
       Optional<SourceMessage> maybeSourceMessage =
           commandMessage.getSourceMessage(completionRequest.getSource());
