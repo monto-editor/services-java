@@ -95,7 +95,6 @@ public class JavaRunner extends MontoService {
         InputStreamProductThread stdoutThread =
             new InputStreamProductThread(
                 StreamOutput.SourceStream.OUT,
-                "run",
                 commandMessage.getSession(),
                 process.getInputStream(),
                 getServiceId(),
@@ -103,7 +102,6 @@ public class JavaRunner extends MontoService {
         InputStreamProductThread stderrThread =
             new InputStreamProductThread(
                 StreamOutput.SourceStream.ERR,
-                "run",
                 commandMessage.getSession(),
                 process.getErrorStream(),
                 getServiceId(),
@@ -115,7 +113,6 @@ public class JavaRunner extends MontoService {
         ProcessTerminationThread processTerminationThread =
             new ProcessTerminationThread(
                 process,
-                "run",
                 commandMessage.getSession(),
                 stdoutThread,
                 stderrThread,

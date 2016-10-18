@@ -18,7 +18,6 @@ import monto.service.types.Source;
 
 public class InputStreamProductThread extends Thread {
   private final StreamOutput.SourceStream sourceStream;
-  private final String launchMode;
   private final int session;
   private final InputStream inputStream;
   private final ServiceId sourceServiceId;
@@ -26,14 +25,12 @@ public class InputStreamProductThread extends Thread {
 
   public InputStreamProductThread(
       StreamOutput.SourceStream sourceStream,
-      String launchMode,
       int session,
       InputStream inputStream,
       ServiceId sourceServiceId,
       Consumer<ProductMessage> onProductMessage) {
     this.sourceStream = sourceStream;
     this.session = session;
-    this.launchMode = launchMode;
     this.inputStream = inputStream;
     this.sourceServiceId = sourceServiceId;
     this.onProductMessage = onProductMessage;
@@ -53,7 +50,7 @@ public class InputStreamProductThread extends Thread {
           onProductMessage.accept(
               new ProductMessage(
                   new LongKey(-1),
-                  new Source(String.format("session:%s:%s", launchMode, session)),
+                  new Source(String.format("session:%s", session)),
                   sourceServiceId,
                   Products.STREAM_OUTPUT,
                   Languages.JAVA,

@@ -61,7 +61,7 @@ public class JavaDebugSession {
       Consumer<Exception> asyncExceptionHandler) {
     this.sessionId = sessionId;
     this.versionId = new LongKey(-1);
-    this.sessionSource = new Source("session:debug:" + sessionId);
+    this.sessionSource = new Source("session:" + sessionId);
     this.vm = vm;
     this.terminationThread = terminationThread;
     this.eventQueueReaderThread = eventQueueReaderThread;

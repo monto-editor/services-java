@@ -207,7 +207,6 @@ public class JavaDebugger extends MontoService {
         InputStreamProductThread stdoutThread =
             new InputStreamProductThread(
                 StreamOutput.SourceStream.OUT,
-                "debug",
                 sessionId,
                 process.getInputStream(),
                 getServiceId(),
@@ -215,7 +214,6 @@ public class JavaDebugger extends MontoService {
         InputStreamProductThread stderrThread =
             new InputStreamProductThread(
                 StreamOutput.SourceStream.ERR,
-                "debug",
                 sessionId,
                 process.getErrorStream(),
                 getServiceId(),
@@ -227,7 +225,6 @@ public class JavaDebugger extends MontoService {
         ProcessTerminationThread processTerminationThread =
             new ProcessTerminationThread(
                 process,
-                "debug",
                 sessionId,
                 stdoutThread,
                 stderrThread,

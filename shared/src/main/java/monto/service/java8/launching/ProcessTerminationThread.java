@@ -14,7 +14,6 @@ import monto.service.types.Source;
 
 public class ProcessTerminationThread extends Thread {
   private final Process process;
-  private final String launchMode;
   private final int session;
   private final InputStreamProductThread stdoutThread;
   private final InputStreamProductThread stderrThread;
@@ -24,7 +23,6 @@ public class ProcessTerminationThread extends Thread {
 
   public ProcessTerminationThread(
       Process process,
-      String launchMode,
       int session,
       InputStreamProductThread stdoutThread,
       InputStreamProductThread stderrThread,
@@ -32,7 +30,6 @@ public class ProcessTerminationThread extends Thread {
       ServiceId sourceServiceId,
       Consumer<ProductMessage> onProductMessage) {
     this.process = process;
-    this.launchMode = launchMode;
     this.session = session;
     this.stdoutThread = stdoutThread;
     this.stderrThread = stderrThread;
@@ -73,7 +70,7 @@ public class ProcessTerminationThread extends Thread {
       onProductMessage.accept(
           new ProductMessage(
               new LongKey(-1),
-              new Source(String.format("session:%s:%s", launchMode, session)),
+              new Source(String.format("session:%s", session)),
               sourceServiceId,
               Products.PROCESS_TERMINATED,
               Languages.JAVA,
