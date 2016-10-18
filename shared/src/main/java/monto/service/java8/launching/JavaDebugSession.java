@@ -41,6 +41,8 @@ import monto.service.types.Source;
 
 public class JavaDebugSession {
   private final int sessionId;
+  private final LongKey versionId;
+  private final Source sessionSource;
   private final VirtualMachine vm;
   private final ProcessTerminationThread terminationThread;
   private final EventQueueReaderThread eventQueueReaderThread;
@@ -48,6 +50,7 @@ public class JavaDebugSession {
   private final Consumer<Exception> asyncExceptionHandler;
   private final List<Breakpoint> deferredBreakpoints;
   private final Map<BreakpointRequest, Breakpoint> installedBreakpoints;
+  private final Map<Breakpoint, BreakpointRequest> reverseInstalledBreakpoints;
 
   public JavaDebugSession(
       int sessionId,
@@ -57,6 +60,8 @@ public class JavaDebugSession {
       Consumer<ProductMessage> onProductMessage,
       Consumer<Exception> asyncExceptionHandler) {
     this.sessionId = sessionId;
+    this.versionId = new LongKey(-1);
+    this.sessionSource = new Source("session:debug:" + sessionId);
     this.vm = vm;
     this.terminationThread = terminationThread;
     this.eventQueueReaderThread = eventQueueReaderThread;
@@ -67,6 +72,7 @@ public class JavaDebugSession {
     eventQueueReaderThread.addBreakpointEventListener(this::onBreakpointHit);
     deferredBreakpoints = new ArrayList<>();
     installedBreakpoints = new HashMap<>();
+    reverseInstalledBreakpoints = new HashMap<>();
   }
 
   public int getSessionId() {
@@ -95,6 +101,15 @@ public class JavaDebugSession {
 
   public void resume() {
     vm.resume();
+    onProductMessage.accept(
+        new ProductMessage(
+            versionId,
+            sessionSource,
+            JavaServices.DEBUGGER,
+            Products.THREADS_RESUMED,
+            Languages.JAVA,
+            null,
+            0));
   }
 
   public void addBreakpoint(Breakpoint breakpoint)
@@ -111,6 +126,17 @@ public class JavaDebugSession {
       }
     } else {
       installBreakpoint(breakpoint, referenceTypes.get(0));
+    }
+  }
+
+  public void removeBreakpoint(Breakpoint breakpoint) {
+    BreakpointRequest breakpointRequest = reverseInstalledBreakpoints.get(breakpoint);
+    if (breakpointRequest != null) {
+      vm.eventRequestManager().deleteEventRequest(breakpointRequest);
+      synchronized (this) {
+        installedBreakpoints.remove(breakpointRequest);
+        reverseInstalledBreakpoints.remove(breakpoint);
+      }
     }
   }
 
@@ -141,8 +167,8 @@ public class JavaDebugSession {
 
       onProductMessage.accept(
           new ProductMessage(
-              new LongKey(-1),
-              new Source("debug:session:" + sessionId),
+              versionId,
+              sessionSource,
               JavaServices.DEBUGGER,
               Products.HIT_BREAKPOINT,
               Languages.JAVA,
@@ -246,15 +272,28 @@ public class JavaDebugSession {
 
   private void installBreakpoint(Breakpoint breakpoint, ReferenceType referenceType)
       throws AbsentInformationException, BreakpointNotAvailableException {
-    List<Location> locationsOfLine = referenceType.locationsOfLine(breakpoint.getLineNumber());
-    if (locationsOfLine.size() == 0) {
-      throw new BreakpointNotAvailableException(breakpoint);
+    BreakpointRequest previousBreakpointRequest = reverseInstalledBreakpoints.get(breakpoint);
+    if (previousBreakpointRequest != null) {
+      if (previousBreakpointRequest.isEnabled()) {
+        System.out.println("Breakpoint already installed and enabled");
+      } else {
+        System.out.println("Breakpoint already installed, but disabled. Activating");
+        previousBreakpointRequest.enable();
+      }
     } else {
-      BreakpointRequest breakpointRequest =
-          getEventRequestManager().createBreakpointRequest(locationsOfLine.get(0));
-      breakpointRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-      breakpointRequest.enable();
-      installedBreakpoints.put(breakpointRequest, breakpoint);
+      List<Location> locationsOfLine = referenceType.locationsOfLine(breakpoint.getLineNumber());
+      if (locationsOfLine.size() == 0) {
+        throw new BreakpointNotAvailableException(breakpoint);
+      } else {
+        BreakpointRequest breakpointRequest =
+            getEventRequestManager().createBreakpointRequest(locationsOfLine.get(0));
+        breakpointRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+        breakpointRequest.enable();
+        synchronized (this) {
+          installedBreakpoints.put(breakpointRequest, breakpoint);
+          reverseInstalledBreakpoints.put(breakpoint, breakpointRequest);
+        }
+      }
     }
   }
 }

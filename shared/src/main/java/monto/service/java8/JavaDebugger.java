@@ -56,16 +56,17 @@ public class JavaDebugger extends MontoService {
         productDescriptions(
             new ProductDescription(Products.STREAM_OUTPUT, Languages.JAVA),
             new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA),
-            new ProductDescription(Products.HIT_BREAKPOINT, Languages.JAVA)
-            //TODO more products here
-            ),
+            new ProductDescription(Products.HIT_BREAKPOINT, Languages.JAVA),
+            new ProductDescription(Products.THREADS_RESUMED, Languages.JAVA)),
         options(),
         dependencies(),
         commands(
             new CommandDescription(Commands.DEBUG_LAUNCH_CONFIGURATION, Languages.JAVA),
             new CommandDescription(Commands.TERMINATE_PROCESS, Languages.JAVA),
             new CommandDescription(Commands.ADD_BREAKPOINT, Languages.JAVA),
-            new CommandDescription(Commands.RESUME_DEBUGGING, Languages.JAVA)));
+            new CommandDescription(Commands.REMOVE_BREAKPOINT, Languages.JAVA),
+            new CommandDescription(Commands.RESUME_DEBUGGING, Languages.JAVA),
+            new CommandDescription(Commands.DEBUG_STEP, Languages.JAVA)));
 
     connector = Bootstrap.virtualMachineManager().defaultConnector();
     debugSessionMap = new HashMap<>();
@@ -80,11 +81,13 @@ public class JavaDebugger extends MontoService {
       } else {
         if (debugSessionMap.containsKey(commandMessage.getSession())) {
           if (command.equals(Commands.TERMINATE_PROCESS)) {
-            // TODO // TODO TERMINATE_DEBUG_PROCESS?
             handleTerminationCommandMessage(commandMessage);
 
           } else if (command.equals(Commands.ADD_BREAKPOINT)) {
             handleAddBreakpoint(commandMessage);
+
+          } else if (command.equals(Commands.REMOVE_BREAKPOINT)) {
+            handleRemoveBreakpoint(commandMessage);
 
           } else if (command.equals(Commands.RESUME_DEBUGGING)) {
             handleResumeDebugging(commandMessage);
@@ -104,17 +107,21 @@ public class JavaDebugger extends MontoService {
   }
 
   private void handleResumeDebugging(CommandMessage commandMessage) {
-    // TODO null checks
     debugSessionMap.get(commandMessage.getSession()).resume();
   }
 
   private void handleAddBreakpoint(CommandMessage commandMessage)
       throws AbsentInformationException, LogicalNameAbsentException,
           BreakpointNotAvailableException {
-    // TODO null checks
     Breakpoint breakpoint = GsonMonto.fromJson(commandMessage.getContents(), Breakpoint.class);
     JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
     debugSession.addBreakpoint(breakpoint);
+  }
+
+  private void handleRemoveBreakpoint(CommandMessage commandMessage) {
+    Breakpoint breakpoint = GsonMonto.fromJson(commandMessage.getContents(), Breakpoint.class);
+    JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
+    debugSession.removeBreakpoint(breakpoint);
   }
 
   private void handleLaunchCommandMessage(CommandMessage commandMessage)
@@ -253,8 +260,7 @@ public class JavaDebugger extends MontoService {
   private void handleTerminationCommandMessage(CommandMessage commandMessage) {
     // CommandMessage doesn't need to be parsed into content, because no additional information is
     // needed for termination
-    // TODO
-    debugSessionMap.get(commandMessage.getSession()).getVm().exit(1001);
+    debugSessionMap.get(commandMessage.getSession()).getVm().exit(100001);
   }
 
   protected void sendExceptionErrorProduct(Throwable t) {
