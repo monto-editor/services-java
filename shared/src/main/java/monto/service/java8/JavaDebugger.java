@@ -61,11 +61,11 @@ public class JavaDebugger extends MontoService {
         options(),
         dependencies(),
         commands(
-            new CommandDescription(Commands.DEBUG_LAUNCH_CONFIGURATION, Languages.JAVA),
-            new CommandDescription(Commands.TERMINATE_PROCESS, Languages.JAVA),
+            new CommandDescription(Commands.DEBUG, Languages.JAVA),
+            new CommandDescription(Commands.TERMINATE, Languages.JAVA),
             new CommandDescription(Commands.ADD_BREAKPOINT, Languages.JAVA),
             new CommandDescription(Commands.REMOVE_BREAKPOINT, Languages.JAVA),
-            new CommandDescription(Commands.RESUME_DEBUGGING, Languages.JAVA),
+            new CommandDescription(Commands.DEBUG_RESUME, Languages.JAVA),
             new CommandDescription(Commands.DEBUG_STEP, Languages.JAVA)));
 
     connector = Bootstrap.virtualMachineManager().defaultConnector();
@@ -76,11 +76,11 @@ public class JavaDebugger extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     try {
       Command command = commandMessage.getCommand();
-      if (command.equals(Commands.DEBUG_LAUNCH_CONFIGURATION)) {
+      if (command.equals(Commands.DEBUG)) {
         handleLaunchCommandMessage(commandMessage);
       } else {
         if (debugSessionMap.containsKey(commandMessage.getSession())) {
-          if (command.equals(Commands.TERMINATE_PROCESS)) {
+          if (command.equals(Commands.TERMINATE)) {
             handleTerminationCommandMessage(commandMessage);
 
           } else if (command.equals(Commands.ADD_BREAKPOINT)) {
@@ -89,7 +89,7 @@ public class JavaDebugger extends MontoService {
           } else if (command.equals(Commands.REMOVE_BREAKPOINT)) {
             handleRemoveBreakpoint(commandMessage);
 
-          } else if (command.equals(Commands.RESUME_DEBUGGING)) {
+          } else if (command.equals(Commands.DEBUG_RESUME)) {
             handleResumeDebugging(commandMessage);
 
           } else {

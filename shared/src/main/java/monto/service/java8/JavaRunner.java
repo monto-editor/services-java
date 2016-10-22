@@ -41,8 +41,8 @@ public class JavaRunner extends MontoService {
         options(),
         dependencies(),
         commands(
-            new CommandDescription(Commands.TERMINATE_PROCESS, Languages.JAVA),
-            new CommandDescription(Commands.RUN_LAUNCH_CONFIGURATION, Languages.JAVA)));
+            new CommandDescription(Commands.TERMINATE, Languages.JAVA),
+            new CommandDescription(Commands.RUN, Languages.JAVA)));
 
     processThreadMap = new HashMap<>();
   }
@@ -50,9 +50,9 @@ public class JavaRunner extends MontoService {
   @Override
   public void onCommandMessage(CommandMessage commandMessage) {
     try {
-      if (commandMessage.getCommand().equals(Commands.RUN_LAUNCH_CONFIGURATION)) {
+      if (commandMessage.getCommand().equals(Commands.RUN)) {
         handleLaunchCommandMessage(commandMessage);
-      } else if (commandMessage.getCommand().equals(Commands.TERMINATE_PROCESS)) {
+      } else if (commandMessage.getCommand().equals(Commands.TERMINATE)) {
         if (processThreadMap.containsKey(commandMessage.getSession())) {
           handleTerminationCommandMessage(commandMessage);
         }

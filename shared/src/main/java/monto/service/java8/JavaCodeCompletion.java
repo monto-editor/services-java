@@ -43,7 +43,7 @@ public class JavaCodeCompletion extends MontoService {
   public void onCommandMessage(CommandMessage commandMessage) {
     long start = System.nanoTime();
 
-    if (commandMessage.getCommand().equals(Commands.CODE_COMPLETION_REQUEST)) {
+    if (commandMessage.getCommand().equals(Commands.COMPLETE_CODE)) {
       CompletionRequest completionRequest =
           GsonMonto.fromJson(commandMessage.getContents(), CompletionRequest.class);
 
