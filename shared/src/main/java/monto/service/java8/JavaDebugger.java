@@ -77,11 +77,11 @@ public class JavaDebugger extends MontoService {
     try {
       Command command = commandMessage.getCommand();
       if (command.equals(Commands.DEBUG)) {
-        handleLaunchCommandMessage(commandMessage);
+        handleLaunch(commandMessage);
       } else {
         if (debugSessionMap.containsKey(commandMessage.getSession())) {
           if (command.equals(Commands.TERMINATE)) {
-            handleTerminationCommandMessage(commandMessage);
+            handleTerminate(commandMessage);
 
           } else if (command.equals(Commands.ADD_BREAKPOINT)) {
             handleAddBreakpoint(commandMessage);
@@ -90,7 +90,7 @@ public class JavaDebugger extends MontoService {
             handleRemoveBreakpoint(commandMessage);
 
           } else if (command.equals(Commands.DEBUG_RESUME)) {
-            handleResumeDebugging(commandMessage);
+            handleResume(commandMessage);
 
           } else {
             System.out.println(
@@ -106,7 +106,7 @@ public class JavaDebugger extends MontoService {
     }
   }
 
-  private void handleResumeDebugging(CommandMessage commandMessage) {
+  private void handleResume(CommandMessage commandMessage) {
     debugSessionMap.get(commandMessage.getSession()).resume();
   }
 
@@ -124,7 +124,7 @@ public class JavaDebugger extends MontoService {
     debugSession.removeBreakpoint(breakpoint);
   }
 
-  private void handleLaunchCommandMessage(CommandMessage commandMessage)
+  private void handleLaunch(CommandMessage commandMessage)
       throws IllegalConnectorArgumentsException, VMStartException, IOException,
           AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
 
@@ -254,7 +254,7 @@ public class JavaDebugger extends MontoService {
     }
   }
 
-  private void handleTerminationCommandMessage(CommandMessage commandMessage) {
+  private void handleTerminate(CommandMessage commandMessage) {
     // CommandMessage doesn't need to be parsed into content, because no additional information is
     // needed for termination
     debugSessionMap.get(commandMessage.getSession()).getVm().exit(100001);
