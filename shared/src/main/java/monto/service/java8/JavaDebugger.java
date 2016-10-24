@@ -35,6 +35,8 @@ import monto.service.launching.DebugLaunchConfiguration;
 import monto.service.launching.StreamOutput;
 import monto.service.launching.debug.Breakpoint;
 import monto.service.launching.debug.BreakpointNotAvailableException;
+import monto.service.launching.debug.StepRequest;
+import monto.service.launching.debug.ThreadNotFoundException;
 import monto.service.product.Products;
 import monto.service.registration.CommandDescription;
 import monto.service.registration.ProductDescription;
@@ -56,6 +58,7 @@ public class JavaDebugger extends MontoService {
         productDescriptions(
             new ProductDescription(Products.STREAM_OUTPUT, Languages.JAVA),
             new ProductDescription(Products.PROCESS_TERMINATED, Languages.JAVA),
+            new ProductDescription(Products.THREAD_STEPPED, Languages.JAVA),
             new ProductDescription(Products.HIT_BREAKPOINT, Languages.JAVA),
             new ProductDescription(Products.THREADS_RESUMED, Languages.JAVA)),
         options(),
@@ -92,6 +95,9 @@ public class JavaDebugger extends MontoService {
           } else if (command.equals(Commands.DEBUG_RESUME)) {
             handleResume(commandMessage);
 
+          } else if (command.equals(Commands.DEBUG_STEP)) {
+            handleStep(commandMessage);
+
           } else {
             System.out.println(
                 "JavaDebugger received unexpected CommandMessage with command " + command);
@@ -100,10 +106,15 @@ public class JavaDebugger extends MontoService {
       }
     } catch (
         IOException | BreakpointNotAvailableException | LogicalNameAbsentException
-                | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException
-            e) {
+            | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException |
+            ThreadNotFoundException e) {
       sendExceptionErrorProduct(e);
     }
+  }
+
+  private void handleStep(CommandMessage commandMessage) throws ThreadNotFoundException {
+    debugSessionMap.get(commandMessage.getSession()).step(
+        GsonMonto.fromJson(commandMessage.getContents(), StepRequest.class));
   }
 
   private void handleResume(CommandMessage commandMessage) {
@@ -112,7 +123,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleAddBreakpoint(CommandMessage commandMessage)
       throws AbsentInformationException, LogicalNameAbsentException,
-          BreakpointNotAvailableException {
+      BreakpointNotAvailableException {
     Breakpoint breakpoint = GsonMonto.fromJson(commandMessage.getContents(), Breakpoint.class);
     JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
     debugSession.addBreakpoint(breakpoint);
@@ -126,7 +137,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleLaunch(CommandMessage commandMessage)
       throws IllegalConnectorArgumentsException, VMStartException, IOException,
-          AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
+      AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
 
     DebugLaunchConfiguration debugLaunchConfiguration =
         GsonMonto.fromJson(commandMessage.getContents(), DebugLaunchConfiguration.class);

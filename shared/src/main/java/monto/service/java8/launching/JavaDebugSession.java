@@ -12,6 +12,7 @@ import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
@@ -30,7 +31,9 @@ import monto.service.launching.debug.Breakpoint;
 import monto.service.launching.debug.BreakpointNotAvailableException;
 import monto.service.launching.debug.HitBreakpoint;
 import monto.service.launching.debug.StackFrame;
+import monto.service.launching.debug.StepRequest;
 import monto.service.launching.debug.Thread;
+import monto.service.launching.debug.ThreadNotFoundException;
 import monto.service.launching.debug.Variable;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
@@ -70,6 +73,7 @@ public class JavaDebugSession {
 
     eventQueueReaderThread.addClassPrepareEventListener(this::onClassPrepareEvent);
     eventQueueReaderThread.addBreakpointEventListener(this::onBreakpointHit);
+    eventQueueReaderThread.addStepListener(this::onStep);
     deferredBreakpoints = new ArrayList<>();
     installedBreakpoints = new HashMap<>();
     reverseInstalledBreakpoints = new HashMap<>();
@@ -114,7 +118,7 @@ public class JavaDebugSession {
 
   public void addBreakpoint(Breakpoint breakpoint)
       throws LogicalNameAbsentException, AbsentInformationException,
-          BreakpointNotAvailableException {
+      BreakpointNotAvailableException {
     if (!breakpoint.getSource().getLogicalName().isPresent()) {
       throw new LogicalNameAbsentException(breakpoint.getSource());
     }
@@ -176,7 +180,7 @@ public class JavaDebugSession {
               0));
     } catch (
         IncompatibleThreadStateException | AbsentInformationException
-                | BreakpointNotAvailableException
+            | BreakpointNotAvailableException
             e) {
       asyncExceptionHandler.accept(e);
     }
@@ -207,10 +211,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                              localValue.getKey().name(),
-                              localValue.getKey().typeName(),
-                              localValue.getValue().toString(),
-                              Variable.KIND_ARGUMENT))
+                          localValue.getKey().name(),
+                          localValue.getKey().typeName(),
+                          localValue.getValue().toString(),
+                          Variable.KIND_ARGUMENT))
                   .collect(Collectors.toList());
 
           List<Variable> locals =
@@ -220,10 +224,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                              localValue.getKey().name(),
-                              localValue.getKey().typeName(),
-                              localValue.getValue().toString(),
-                              Variable.KIND_LOCAL))
+                          localValue.getKey().name(),
+                          localValue.getKey().typeName(),
+                          localValue.getValue().toString(),
+                          Variable.KIND_LOCAL))
                   .collect(Collectors.toList());
 
           stackVariables.addAll(arguments);
@@ -249,7 +253,8 @@ public class JavaDebugSession {
       stackFrames.add(new StackFrame(jdiStackFrame.location().toString(), stackVariables));
     }
 
-    return new Thread(threadReference.name(), stackFrames, hitBreakpoint);
+    return new Thread(threadReference.uniqueID(), threadReference.name(), stackFrames,
+        hitBreakpoint);
   }
 
   private synchronized void onClassPrepareEvent(ClassPrepareEvent classPrepareEvent) {
@@ -294,6 +299,60 @@ public class JavaDebugSession {
           reverseInstalledBreakpoints.put(breakpoint, breakpointRequest);
         }
       }
+    }
+  }
+
+  private ThreadReference getThreadReference(long threadUniqueId) throws ThreadNotFoundException {
+    List<ThreadReference>
+        threads =
+        vm.allThreads().stream().filter(thread -> thread.uniqueID() == threadUniqueId)
+            .collect(Collectors.toList());
+    if (threads.size() == 1) {
+      return threads.get(0);
+    } else {
+      throw new ThreadNotFoundException(threadUniqueId);
+    }
+  }
+
+  public void step(StepRequest request) throws ThreadNotFoundException {
+    ThreadReference threadReference = getThreadReference(request.getThread().getId());
+    int depth = com.sun.jdi.request.StepRequest.STEP_OVER;
+    switch (request.getRange()) {
+      case OVER:
+        depth = com.sun.jdi.request.StepRequest.STEP_OVER;
+        break;
+      case INTO:
+        depth = com.sun.jdi.request.StepRequest.STEP_INTO;
+        break;
+      case OUT:
+        depth = com.sun.jdi.request.StepRequest.STEP_OUT;
+        break;
+    }
+    com.sun.jdi.request.StepRequest jdiStepRequest = getEventRequestManager()
+        .createStepRequest(threadReference, com.sun.jdi.request.StepRequest.STEP_LINE, depth);
+    jdiStepRequest.addCountFilter(1);
+    jdiStepRequest.enable();
+    threadReference.resume();
+//    vm.resume();
+  }
+
+  private void onStep(StepEvent stepEvent) {
+    try {
+      // There can only be one StepRequest per ThreadReference
+      // Delete triggering request, so that there are no outstanding StepRequest
+      getEventRequestManager().deleteEventRequest(stepEvent.request());
+      Thread thread = convertJdiThreadTreeToMontoThreadTree(stepEvent.thread(),
+          null /* TODO: should not be null, but original suspending breakpoint */);
+      onProductMessage.accept(
+          new ProductMessage(versionId,
+              sessionSource,
+              JavaServices.DEBUGGER,
+              Products.THREAD_STEPPED,
+              Languages.JAVA,
+              GsonMonto.toJsonTree(thread),
+              0));
+    } catch (IncompatibleThreadStateException | AbsentInformationException e) {
+      asyncExceptionHandler.accept(e);
     }
   }
 }
