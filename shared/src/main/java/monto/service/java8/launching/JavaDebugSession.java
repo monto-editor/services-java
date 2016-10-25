@@ -49,8 +49,11 @@ public class JavaDebugSession {
   private final VirtualMachine vm;
   private final ProcessTerminationThread terminationThread;
   private final EventQueueReaderThread eventQueueReaderThread;
+  private final List<Source> sources;
+
   private final Consumer<ProductMessage> onProductMessage;
   private final Consumer<Exception> asyncExceptionHandler;
+
   private final List<Breakpoint> deferredBreakpoints;
   private final Map<BreakpointRequest, Breakpoint> installedBreakpoints;
   private final Map<Breakpoint, BreakpointRequest> reverseInstalledBreakpoints;
@@ -60,6 +63,7 @@ public class JavaDebugSession {
       VirtualMachine vm,
       ProcessTerminationThread terminationThread,
       EventQueueReaderThread eventQueueReaderThread,
+      List<Source> sources,
       Consumer<ProductMessage> onProductMessage,
       Consumer<Exception> asyncExceptionHandler) {
     this.sessionId = sessionId;
@@ -68,6 +72,8 @@ public class JavaDebugSession {
     this.vm = vm;
     this.terminationThread = terminationThread;
     this.eventQueueReaderThread = eventQueueReaderThread;
+    this.sources = sources;
+
     this.onProductMessage = onProductMessage;
     this.asyncExceptionHandler = asyncExceptionHandler;
 
@@ -250,11 +256,29 @@ public class JavaDebugSession {
         stackVariables.add(thiss);
       }
 
-      stackFrames.add(new StackFrame(jdiStackFrame.location().toString(), stackVariables));
+      stackFrames.add(new StackFrame(getSourceForLocation(jdiStackFrame.location()).orElse(null),
+          jdiStackFrame.location().lineNumber(), stackVariables));
     }
 
     return new Thread(threadReference.uniqueID(), threadReference.name(), stackFrames,
         hitBreakpoint);
+  }
+
+  private Optional<Source> getSourceForLocation(Location location) {
+    try {
+      String logicalSourceName = location.sourcePath().replace(".java", "").replaceAll("/", ".");
+      Optional<Source> sourceOptional = sources.stream().filter(
+          source -> source.getLogicalName().isPresent() && source.getLogicalName().get()
+              .equals(logicalSourceName))
+          .findFirst();
+      if (sourceOptional.isPresent()) {
+        return sourceOptional;
+      } else {
+        return Optional.of(new Source(location.sourcePath() + ":" + location.lineNumber()));
+      }
+    } catch (AbsentInformationException ignored) {
+    }
+    return Optional.empty();
   }
 
   private synchronized void onClassPrepareEvent(ClassPrepareEvent classPrepareEvent) {
@@ -333,13 +357,12 @@ public class JavaDebugSession {
     jdiStepRequest.addCountFilter(1);
     jdiStepRequest.enable();
     threadReference.resume();
-//    vm.resume();
   }
 
   private void onStep(StepEvent stepEvent) {
     try {
-      // There can only be one StepRequest per ThreadReference
-      // Delete triggering request, so that there are no outstanding StepRequest
+      // There can only be one StepRequest per ThreadReference.
+      // Delete triggering request, so that there is no outstanding StepRequest.
       getEventRequestManager().deleteEventRequest(stepEvent.request());
       Thread thread = convertJdiThreadTreeToMontoThreadTree(stepEvent.thread(),
           null /* TODO: should not be null, but original suspending breakpoint */);

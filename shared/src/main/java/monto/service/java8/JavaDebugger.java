@@ -14,6 +14,7 @@ import com.sun.jdi.request.EventRequestManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,6 +45,7 @@ import monto.service.source.LogicalNameAbsentException;
 import monto.service.source.SourceMessage;
 import monto.service.types.Command;
 import monto.service.types.Languages;
+import monto.service.types.Source;
 
 public class JavaDebugger extends MontoService {
   private final LaunchingConnector connector;
@@ -245,12 +247,19 @@ public class JavaDebugger extends MontoService {
 
         processTerminationThread.start();
 
+        // JavaDebugSession needs all sources of the debugged project, so that when a Breakpoint/
+        // StepEvent is hit, the correct source can be found, so that IDEs can highlight it.
+        ArrayList<Source> sources = new ArrayList<>();
+        sources.add(mainClassSourceMessage.getSource());
+        // TODO: Once project dependencies are implemented, other sources of the project should be added here
+
         JavaDebugSession debugSession =
             new JavaDebugSession(
                 sessionId,
                 vm,
                 processTerminationThread,
                 eventQueueReaderThread,
+                sources,
                 this::sendProductMessage,
                 this::sendExceptionErrorProduct);
 
