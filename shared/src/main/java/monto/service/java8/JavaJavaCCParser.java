@@ -1,5 +1,11 @@
 package monto.service.java8;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseException;
 import com.github.javaparser.ast.Node;
@@ -11,12 +17,6 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;
@@ -57,7 +57,7 @@ public class JavaJavaCCParser extends MontoService {
 
     try {
       Node root = JavaParser.parse(new StringReader(contents), true);
-      ASTNode convertedRoot = encode(offsets(sourceMessage.getContents()), root);
+      ASTNode convertedRoot = encode(Region.getLineOffsets(sourceMessage.getContents()), root);
       sendProductMessage(
           sourceMessage.getId(),
           sourceMessage.getSource(),
@@ -74,20 +74,6 @@ public class JavaJavaCCParser extends MontoService {
           e,
           System.nanoTime() - start);
     }
-  }
-
-  private static int[] offsets(String document) {
-    String lines[] = document.split("\\r?\\n");
-    int[] offsets = new int[lines.length + 1];
-    int offset = 0;
-    offsets[0] = offset;
-    int i = 1;
-    for (String line : lines) {
-      offset += line.length() + 1;
-      offsets[i] = offset;
-      i++;
-    }
-    return offsets;
   }
 
   private ASTNode astNode(String name, List<ASTNode> children, IRegion region) {
@@ -156,7 +142,7 @@ public class JavaJavaCCParser extends MontoService {
               astNode(
                   "Identifier",
                   new ArrayList<>(),
-                  region(
+                  Region.fromLineNumberColumn(
                       offsets,
                       decl.getBeginLine(),
                       decl.getBeginColumn(),
@@ -178,7 +164,8 @@ public class JavaJavaCCParser extends MontoService {
 
   private ASTNode makeModifierObject(int[] offsets, int modifiers, Node n) {
     IRegion modRegion =
-        region(offsets, n.getBeginLine(), n.getBeginColumn(), n.getEndLine(), n.getEndColumn());
+        Region.fromLineNumberColumn(
+            offsets, n.getBeginLine(), n.getBeginColumn(), n.getEndLine(), n.getEndColumn());
     List<String> mods = modifiers(modifiers);
     List<ASTNode> modChildrenArray = new ArrayList<>();
     for (String mod : mods) {
@@ -188,25 +175,12 @@ public class JavaJavaCCParser extends MontoService {
   }
 
   private Region region(int[] offsets, Node node) {
-    return region(
+    return Region.fromLineNumberColumn(
         offsets,
         node.getBeginLine(),
         node.getBeginColumn(),
         node.getEndLine(),
         node.getEndColumn());
-  }
-
-  private Region region(int[] offsets, int startLine, int startColumn, int endLine, int endColumn) {
-    try {
-      int startOffset = offsets[startLine - 1] + startColumn - 1;
-      int endOffset;
-      if (endLine - 1 >= offsets.length) endOffset = offsets[offsets.length - 1] + endColumn - 1;
-      else endOffset = offsets[endLine - 1] + endColumn - 1;
-      return new Region(startOffset, endOffset - startOffset + 1);
-    } catch (ArrayIndexOutOfBoundsException e) {
-      throw new RuntimeException(
-          String.format("%d, %s", offsets.length, Arrays.toString(offsets)), e);
-    }
   }
 
   private List<String> modifiers(int modifier) {
