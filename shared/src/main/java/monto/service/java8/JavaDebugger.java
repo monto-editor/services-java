@@ -108,15 +108,17 @@ public class JavaDebugger extends MontoService {
       }
     } catch (
         IOException | BreakpointNotAvailableException | LogicalNameAbsentException
-            | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException |
-            ThreadNotFoundException e) {
+                | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException
+                | ThreadNotFoundException
+            e) {
       sendExceptionErrorProduct(e);
     }
   }
 
   private void handleStep(CommandMessage commandMessage) throws ThreadNotFoundException {
-    debugSessionMap.get(commandMessage.getSession()).step(
-        GsonMonto.fromJson(commandMessage.getContents(), StepRequest.class));
+    debugSessionMap
+        .get(commandMessage.getSession())
+        .step(GsonMonto.fromJson(commandMessage.getContents(), StepRequest.class));
   }
 
   private void handleResume(CommandMessage commandMessage) {
@@ -125,7 +127,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleAddBreakpoint(CommandMessage commandMessage)
       throws AbsentInformationException, LogicalNameAbsentException,
-      BreakpointNotAvailableException {
+          BreakpointNotAvailableException {
     Breakpoint breakpoint = GsonMonto.fromJson(commandMessage.getContents(), Breakpoint.class);
     JavaDebugSession debugSession = debugSessionMap.get(commandMessage.getSession());
     debugSession.addBreakpoint(breakpoint);
@@ -139,7 +141,7 @@ public class JavaDebugger extends MontoService {
 
   private void handleLaunch(CommandMessage commandMessage)
       throws IllegalConnectorArgumentsException, VMStartException, IOException,
-      AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
+          AbsentInformationException, LogicalNameAbsentException, BreakpointNotAvailableException {
 
     DebugLaunchConfiguration debugLaunchConfiguration =
         GsonMonto.fromJson(commandMessage.getContents(), DebugLaunchConfiguration.class);
@@ -249,9 +251,9 @@ public class JavaDebugger extends MontoService {
 
         // JavaDebugSession needs all sources of the debugged project, so that when a Breakpoint/
         // StepEvent is hit, the correct source can be found, so that IDEs can highlight it.
-        ArrayList<Source> sources = new ArrayList<>();
-        sources.add(mainClassSourceMessage.getSource());
-        // TODO: Once project dependencies are implemented, other sources of the project should be added here
+        ArrayList<SourceMessage> sourceMessages = new ArrayList<>();
+        sourceMessages.add(mainClassSourceMessage);
+        // TODO: Once project dependencies are implemented, other source messages of the project should be added here
 
         JavaDebugSession debugSession =
             new JavaDebugSession(
@@ -259,7 +261,7 @@ public class JavaDebugger extends MontoService {
                 vm,
                 processTerminationThread,
                 eventQueueReaderThread,
-                sources,
+                sourceMessages,
                 this::sendProductMessage,
                 this::sendExceptionErrorProduct);
 

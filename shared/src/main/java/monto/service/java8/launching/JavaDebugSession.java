@@ -16,6 +16,7 @@ import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +38,10 @@ import monto.service.launching.debug.ThreadNotFoundException;
 import monto.service.launching.debug.Variable;
 import monto.service.product.ProductMessage;
 import monto.service.product.Products;
+import monto.service.region.Region;
 import monto.service.source.LogicalNameAbsentException;
+import monto.service.source.SourceMessage;
+import monto.service.types.Either;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
 import monto.service.types.Source;
@@ -49,7 +53,7 @@ public class JavaDebugSession {
   private final VirtualMachine vm;
   private final ProcessTerminationThread terminationThread;
   private final EventQueueReaderThread eventQueueReaderThread;
-  private final List<Source> sources;
+  private final List<SourceMessage> sourceMessages;
 
   private final Consumer<ProductMessage> onProductMessage;
   private final Consumer<Exception> asyncExceptionHandler;
@@ -63,7 +67,7 @@ public class JavaDebugSession {
       VirtualMachine vm,
       ProcessTerminationThread terminationThread,
       EventQueueReaderThread eventQueueReaderThread,
-      List<Source> sources,
+      List<SourceMessage> sourceMessages,
       Consumer<ProductMessage> onProductMessage,
       Consumer<Exception> asyncExceptionHandler) {
     this.sessionId = sessionId;
@@ -72,7 +76,7 @@ public class JavaDebugSession {
     this.vm = vm;
     this.terminationThread = terminationThread;
     this.eventQueueReaderThread = eventQueueReaderThread;
-    this.sources = sources;
+    this.sourceMessages = sourceMessages;
 
     this.onProductMessage = onProductMessage;
     this.asyncExceptionHandler = asyncExceptionHandler;
@@ -124,7 +128,7 @@ public class JavaDebugSession {
 
   public void addBreakpoint(Breakpoint breakpoint)
       throws LogicalNameAbsentException, AbsentInformationException,
-      BreakpointNotAvailableException {
+          BreakpointNotAvailableException {
     if (!breakpoint.getSource().getLogicalName().isPresent()) {
       throw new LogicalNameAbsentException(breakpoint.getSource());
     }
@@ -186,7 +190,7 @@ public class JavaDebugSession {
               0));
     } catch (
         IncompatibleThreadStateException | AbsentInformationException
-            | BreakpointNotAvailableException
+                | BreakpointNotAvailableException
             e) {
       asyncExceptionHandler.accept(e);
     }
@@ -217,10 +221,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                          localValue.getKey().name(),
-                          localValue.getKey().typeName(),
-                          localValue.getValue().toString(),
-                          Variable.KIND_ARGUMENT))
+                              localValue.getKey().name(),
+                              localValue.getKey().typeName(),
+                              localValue.getValue().toString(),
+                              Variable.KIND_ARGUMENT))
                   .collect(Collectors.toList());
 
           List<Variable> locals =
@@ -230,10 +234,10 @@ public class JavaDebugSession {
                   .map(
                       localValue
                           -> new Variable(
-                          localValue.getKey().name(),
-                          localValue.getKey().typeName(),
-                          localValue.getValue().toString(),
-                          Variable.KIND_LOCAL))
+                              localValue.getKey().name(),
+                              localValue.getKey().typeName(),
+                              localValue.getValue().toString(),
+                              Variable.KIND_LOCAL))
                   .collect(Collectors.toList());
 
           stackVariables.addAll(arguments);
@@ -256,25 +260,72 @@ public class JavaDebugSession {
         stackVariables.add(thiss);
       }
 
-      stackFrames.add(new StackFrame(getSourceForLocation(jdiStackFrame.location()).orElse(null),
-          jdiStackFrame.location().lineNumber(), stackVariables));
+      Optional<Either<Pair<SourceMessage, Integer>, Pair<String, Integer>>> maybeEitherPair =
+          getSourceMessageForLocation(jdiStackFrame.location());
+
+      if (maybeEitherPair.isPresent()) {
+
+        Either<Pair<SourceMessage, Integer>, Pair<String, Integer>> eitherPair =
+            maybeEitherPair.get();
+
+        StackFrame stackFrame =
+            eitherPair.match(
+                sourceMessageFoundPair
+                    -> new StackFrame(
+                        sourceMessageFoundPair.getLeft().getSource(),
+                        sourceMessageFoundPair.getRight(),
+                        Region.fromLineNumber(
+                            sourceMessageFoundPair.getLeft().getContents(),
+                            sourceMessageFoundPair.getRight(),
+                            sourceMessageFoundPair.getRight()),
+                        stackVariables),
+                sourceMessageNotFoundPair
+                    -> new StackFrame(
+                        new Source(sourceMessageNotFoundPair.getLeft()),
+                        sourceMessageNotFoundPair.getRight(),
+                        null,
+                        stackVariables));
+
+        stackFrames.add(stackFrame);
+      }
     }
 
-    return new Thread(threadReference.uniqueID(), threadReference.name(), stackFrames,
-        hitBreakpoint);
+    return new Thread(
+        threadReference.uniqueID(), threadReference.name(), stackFrames, hitBreakpoint);
   }
 
-  private Optional<Source> getSourceForLocation(Location location) {
+  /**
+   * @return {@link Optional}&lt;{@link Either.Left}&gt; if a SourceMessage with logical name for
+   * <code>location</code> was found in <code>sourceMessages</code>. <br><br>
+   *
+   * {@link Optional}&lt;{@link Either.Right}&gt; if no SourceMessage with logical name for
+   * <code>location</code> was found in <code>sourceMessages</code>. The {@link Pair} contains the
+   * name and line number of location. <br><br>
+   *
+   * An empty {@link Optional}, if SourcePath can be extracted from given <code>location</code>.
+   */
+  private Optional<Either<Pair<SourceMessage, Integer>, Pair<String, Integer>>>
+      getSourceMessageForLocation(Location location) {
     try {
       String logicalSourceName = location.sourcePath().replace(".java", "").replaceAll("/", ".");
-      Optional<Source> sourceOptional = sources.stream().filter(
-          source -> source.getLogicalName().isPresent() && source.getLogicalName().get()
-              .equals(logicalSourceName))
-          .findFirst();
-      if (sourceOptional.isPresent()) {
-        return sourceOptional;
+      Optional<SourceMessage> sourceMessagesOptional =
+          sourceMessages
+              .stream()
+              .filter(
+                  sourceMessages
+                      -> sourceMessages.getSource().getLogicalName().isPresent()
+                          && sourceMessages
+                              .getSource()
+                              .getLogicalName()
+                              .get()
+                              .equals(logicalSourceName))
+              .findFirst();
+      if (sourceMessagesOptional.isPresent()) {
+        return Optional.of(
+            new Either.Left<>(Pair.of(sourceMessagesOptional.get(), location.lineNumber())));
       } else {
-        return Optional.of(new Source(location.sourcePath() + ":" + location.lineNumber()));
+        return Optional.of(
+            new Either.Right<>(Pair.of(location.sourcePath(), location.lineNumber())));
       }
     } catch (AbsentInformationException ignored) {
     }
@@ -327,9 +378,10 @@ public class JavaDebugSession {
   }
 
   private ThreadReference getThreadReference(long threadUniqueId) throws ThreadNotFoundException {
-    List<ThreadReference>
-        threads =
-        vm.allThreads().stream().filter(thread -> thread.uniqueID() == threadUniqueId)
+    List<ThreadReference> threads =
+        vm.allThreads()
+            .stream()
+            .filter(thread -> thread.uniqueID() == threadUniqueId)
             .collect(Collectors.toList());
     if (threads.size() == 1) {
       return threads.get(0);
@@ -352,8 +404,9 @@ public class JavaDebugSession {
         depth = com.sun.jdi.request.StepRequest.STEP_OUT;
         break;
     }
-    com.sun.jdi.request.StepRequest jdiStepRequest = getEventRequestManager()
-        .createStepRequest(threadReference, com.sun.jdi.request.StepRequest.STEP_LINE, depth);
+    com.sun.jdi.request.StepRequest jdiStepRequest =
+        getEventRequestManager()
+            .createStepRequest(threadReference, com.sun.jdi.request.StepRequest.STEP_LINE, depth);
     jdiStepRequest.addCountFilter(1);
     jdiStepRequest.enable();
     threadReference.resume();
@@ -364,10 +417,13 @@ public class JavaDebugSession {
       // There can only be one StepRequest per ThreadReference.
       // Delete triggering request, so that there is no outstanding StepRequest.
       getEventRequestManager().deleteEventRequest(stepEvent.request());
-      Thread thread = convertJdiThreadTreeToMontoThreadTree(stepEvent.thread(),
-          null /* TODO: should not be null, but original suspending breakpoint */);
+      Thread thread =
+          convertJdiThreadTreeToMontoThreadTree(
+              stepEvent.thread(),
+              null /* TODO: should not be null, but original suspending breakpoint */);
       onProductMessage.accept(
-          new ProductMessage(versionId,
+          new ProductMessage(
+              versionId,
               sessionSource,
               JavaServices.DEBUGGER,
               Products.THREAD_STEPPED,
