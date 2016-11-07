@@ -90,7 +90,7 @@ public class Main {
       services.add(new JavaIdentifierFinder(zmqConfig));
     }
     if (cmd.hasOption("codecompletioner")) {
-      services.add(new JavaCodeCompletion(zmqConfig));
+      services.add(new JavaCodeCompletioner(zmqConfig));
     }
     if (cmd.hasOption("logicalnameextractor")) {
       services.add(new JavaLogicalNameExtractor(zmqConfig));
