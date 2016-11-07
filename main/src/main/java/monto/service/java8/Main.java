@@ -41,14 +41,15 @@ public class Main {
 
     Options options = new Options();
     options
-        .addOption("highlighting", false, "enable Java Syntax Highlighting")
+        .addOption("highlighter", false, "enable Java syntax highlighter")
         .addOption("antlrparser", false, "enable Java ANTLR parser")
         .addOption("javaccparser", false, "enable JavaCC parser")
-        .addOption("outline", false, "enable Java outliner")
-        .addOption("codecompletion", false, "enable Java code completioner")
+        .addOption("outliner", false, "enable Java outliner")
+        .addOption("identifierfinder", false, "enable Java identifier finder")
+        .addOption("codecompletioner", false, "enable Java code completioner")
         .addOption("runner", false, "enable Java runtime service")
         .addOption("debugger", false, "enable Java debugger service")
-        .addOption("logicalnames", false, "enable logical name extractor")
+        .addOption("logicalnameextractor", false, "enable logical name extractor")
         .addOption("address", true, "address of services")
         .addOption("registration", true, "address of broker registration")
         .addOption("resources", true, "port for http resource server")
@@ -67,9 +68,13 @@ public class Main {
     resourceServer =
         new ResourceServer(
             Main.class.getResource("/icons").toExternalForm(), zmqConfig.getResourcePort());
-    resourceServer.start();
+    try {
+      resourceServer.start();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
-    if (cmd.hasOption("highlighting")) {
+    if (cmd.hasOption("highlighter")) {
       services.add(new JavaHighlighter(zmqConfig));
     }
     if (cmd.hasOption("javaccparser")) {
@@ -78,14 +83,16 @@ public class Main {
     if (cmd.hasOption("antlrparser")) {
       services.add(new ANTLRJavaParser(zmqConfig));
     }
-    if (cmd.hasOption("outline")) {
+    if (cmd.hasOption("outliner")) {
       services.add(new JavaOutliner(zmqConfig));
     }
-    if (cmd.hasOption("codecompletion")) {
+    if (cmd.hasOption("identifierfinder")) {
       services.add(new JavaIdentifierFinder(zmqConfig));
+    }
+    if (cmd.hasOption("codecompletioner")) {
       services.add(new JavaCodeCompletion(zmqConfig));
     }
-    if (cmd.hasOption("logicalnames")) {
+    if (cmd.hasOption("logicalnameextractor")) {
       services.add(new JavaLogicalNameExtractor(zmqConfig));
     }
     if (cmd.hasOption("runner")) {
@@ -97,8 +104,13 @@ public class Main {
     if (cmd.hasOption("debug")) {
       services.forEach(MontoService::enableDebugging);
     }
+
     for (MontoService service : services) {
-      service.start();
+      try {
+        service.start();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 }

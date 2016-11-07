@@ -2,7 +2,7 @@ package monto.service.java8;
 
 import monto.service.types.ServiceId;
 
-public class JavaServices {
+public final class JavaServices {
   public static final ServiceId HIGHLIGHTER = new ServiceId("javaHighlighter");
   public static final ServiceId ANTLR_PARSER = new ServiceId("javaAntlrParser");
   public static final ServiceId JAVACC_PARSER = new ServiceId("javaJavaCCParser");
@@ -12,4 +12,6 @@ public class JavaServices {
   public static final ServiceId LOGICAL_NAME_EXTRACTOR = new ServiceId("javaLogicalNameExtractor");
   public static final ServiceId RUNNER = new ServiceId("javaRunner");
   public static final ServiceId DEBUGGER = new ServiceId("javaDebugger");
+
+  private JavaServices() {}
 }
