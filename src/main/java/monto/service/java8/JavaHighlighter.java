@@ -1,8 +1,5 @@
 package monto.service.java8;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.apache.commons.lang3.text.WordUtils;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +23,8 @@ import monto.service.registration.SourceDependency;
 import monto.service.request.Request;
 import monto.service.source.SourceMessage;
 import monto.service.types.Languages;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.apache.commons.lang3.text.WordUtils;
 
 @SuppressWarnings("rawtypes")
 public class JavaHighlighter extends MontoService {

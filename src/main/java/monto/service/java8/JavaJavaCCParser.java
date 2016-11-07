@@ -1,11 +1,5 @@
 package monto.service.java8;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseException;
 import com.github.javaparser.ast.Node;
@@ -16,7 +10,11 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.ModifierSet;
 import com.github.javaparser.ast.body.TypeDeclaration;
-
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.ast.ASTNode;

@@ -10,7 +10,6 @@ import com.sun.jdi.connect.VMStartException;
 import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +44,6 @@ import monto.service.source.LogicalNameAbsentException;
 import monto.service.source.SourceMessage;
 import monto.service.types.Command;
 import monto.service.types.Languages;
-import monto.service.types.Source;
 
 public class JavaDebugger extends MontoService {
   private final LaunchingConnector connector;
@@ -106,11 +104,13 @@ public class JavaDebugger extends MontoService {
           }
         }
       }
-    } catch (
-        IOException | BreakpointNotAvailableException | LogicalNameAbsentException
-                | AbsentInformationException | VMStartException | IllegalConnectorArgumentsException
-                | ThreadNotFoundException
-            e) {
+    } catch (IOException
+        | BreakpointNotAvailableException
+        | LogicalNameAbsentException
+        | AbsentInformationException
+        | VMStartException
+        | IllegalConnectorArgumentsException
+        | ThreadNotFoundException e) {
       sendExceptionErrorProduct(e);
     }
   }

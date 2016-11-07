@@ -183,8 +183,8 @@ public class JavaIdentifierFinder extends MontoService {
             importedFiles
                 .stream()
                 .map(
-                    importedFile
-                        -> new DynamicDependency(
+                    importedFile ->
+                        new DynamicDependency(
                             new Source(importedFile),
                             JavaServices.IDENTIFIER_FINDER,
                             Products.IDENTIFIER,
@@ -221,8 +221,8 @@ public class JavaIdentifierFinder extends MontoService {
     // root is always a CompilationUnit
     List<ASTNode> compilationUnitChildren = root.getChildren();
     compilationUnitChildren.forEach(
-        child
-            -> child.accept(
+        child ->
+            child.accept(
                 node -> {
                   switch (node.getName()) {
                     case "ImportDeclaration":
@@ -287,8 +287,8 @@ public class JavaIdentifierFinder extends MontoService {
               .stream()
               .filter(identifier -> identifier.getName().equals("EnumConstantDeclaration"))
               .forEach(
-                  identifier
-                      -> identifiers.add(
+                  identifier ->
+                      identifiers.add(
                           new Identifier(enumName + "." + identifier.extract(sourceCode), "enum")));
           break;
 

@@ -1,16 +1,15 @@
 package monto.service.java8;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.zeromq.ZContext;
-
 import java.util.ArrayList;
 import java.util.List;
 import monto.service.MontoService;
 import monto.service.ZMQConfiguration;
 import monto.service.resources.ResourceServer;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.zeromq.ZContext;
 
 public class Main {
 

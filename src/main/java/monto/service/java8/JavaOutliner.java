@@ -64,8 +64,7 @@ public class JavaOutliner extends MontoService {
       throw new RuntimeException(
           String.format(
               "error while trimming the following AST:\n%s\nLength: %d",
-              root.toString(),
-              version.getContents().length()),
+              root.toString(), version.getContents().length()),
           e);
     }
     long end = System.nanoTime();
@@ -79,9 +78,7 @@ public class JavaOutliner extends MontoService {
         ast.getTime() + end - start);
   }
 
-  /**
-   * Traverses the AST and removes unneeded information.
-   */
+  /** Traverses the AST and removes unneeded information. */
   private class OutlineTrimmer implements ASTNodeVisitor {
 
     private Deque<Outline> converted = new ArrayDeque<>();

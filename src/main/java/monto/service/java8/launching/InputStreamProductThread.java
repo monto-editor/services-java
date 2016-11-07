@@ -1,7 +1,5 @@
 package monto.service.java8.launching;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -15,6 +13,7 @@ import monto.service.types.Languages;
 import monto.service.types.LongKey;
 import monto.service.types.ServiceId;
 import monto.service.types.Source;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class InputStreamProductThread extends Thread {
   private final StreamOutput.SourceStream sourceStream;

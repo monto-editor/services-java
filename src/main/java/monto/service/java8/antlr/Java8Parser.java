@@ -1,6 +1,7 @@
 // Generated from src/monto/service/java8/antlr/Java8.g4 by ANTLR 4.5.2
 package monto.service.java8.antlr;
 
+import java.util.List;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNDeserializer;
@@ -9,8 +10,6 @@ import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.TerminalNode;
-
-import java.util.List;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class Java8Parser extends Parser {
@@ -825,9 +824,7 @@ public class Java8Parser extends Parser {
   };
   public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
-  /**
-   * @deprecated Use {@link #VOCABULARY} instead.
-   */
+  /** @deprecated Use {@link #VOCABULARY} instead. */
   @Deprecated public static final String[] tokenNames;
 
   static {

@@ -6,7 +6,6 @@ import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.event.StepEvent;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;

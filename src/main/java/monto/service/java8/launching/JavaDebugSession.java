@@ -16,8 +16,6 @@ import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,6 +43,7 @@ import monto.service.types.Either;
 import monto.service.types.Languages;
 import monto.service.types.LongKey;
 import monto.service.types.Source;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class JavaDebugSession {
   private final int sessionId;
@@ -172,8 +171,7 @@ public class JavaDebugSession {
         throw new BreakpointNotAvailableException(
             String.format(
                 "A unexpected breakpoint was hit at %s:%s",
-                breakpointEvent.location().sourceName(),
-                breakpointEvent.location().lineNumber()));
+                breakpointEvent.location().sourceName(), breakpointEvent.location().lineNumber()));
       }
       HitBreakpoint hitBreakpointProduct =
           new HitBreakpoint(
@@ -188,10 +186,9 @@ public class JavaDebugSession {
               Languages.JAVA,
               GsonMonto.toJsonTree(hitBreakpointProduct),
               0));
-    } catch (
-        IncompatibleThreadStateException | AbsentInformationException
-                | BreakpointNotAvailableException
-            e) {
+    } catch (IncompatibleThreadStateException
+        | AbsentInformationException
+        | BreakpointNotAvailableException e) {
       asyncExceptionHandler.accept(e);
     }
   }
@@ -219,8 +216,8 @@ public class JavaDebugSession {
                   .entrySet()
                   .stream()
                   .map(
-                      localValue
-                          -> new Variable(
+                      localValue ->
+                          new Variable(
                               localValue.getKey().name(),
                               localValue.getKey().typeName(),
                               localValue.getValue().toString(),
@@ -232,8 +229,8 @@ public class JavaDebugSession {
                   .entrySet()
                   .stream()
                   .map(
-                      localValue
-                          -> new Variable(
+                      localValue ->
+                          new Variable(
                               localValue.getKey().name(),
                               localValue.getKey().typeName(),
                               localValue.getValue().toString(),
@@ -270,8 +267,8 @@ public class JavaDebugSession {
 
         StackFrame stackFrame =
             eitherPair.match(
-                sourceMessageFoundPair
-                    -> new StackFrame(
+                sourceMessageFoundPair ->
+                    new StackFrame(
                         sourceMessageFoundPair.getLeft().getSource(),
                         sourceMessageFoundPair.getRight(),
                         Region.fromLineNumber(
@@ -279,8 +276,8 @@ public class JavaDebugSession {
                             sourceMessageFoundPair.getRight(),
                             sourceMessageFoundPair.getRight()),
                         stackVariables),
-                sourceMessageNotFoundPair
-                    -> new StackFrame(
+                sourceMessageNotFoundPair ->
+                    new StackFrame(
                         new Source(sourceMessageNotFoundPair.getLeft()),
                         sourceMessageNotFoundPair.getRight(),
                         null,
@@ -296,13 +293,13 @@ public class JavaDebugSession {
 
   /**
    * @return {@link Optional}&lt;{@link Either.Left}&gt; if a SourceMessage with logical name for
-   * <code>location</code> was found in <code>sourceMessages</code>. <br><br>
-   *
-   * {@link Optional}&lt;{@link Either.Right}&gt; if no SourceMessage with logical name for
-   * <code>location</code> was found in <code>sourceMessages</code>. The {@link Pair} contains the
-   * name and line number of location. <br><br>
-   *
-   * An empty {@link Optional}, if SourcePath can be extracted from given <code>location</code>.
+   *     <code>location</code> was found in <code>sourceMessages</code>. <br>
+   *     <br>
+   *     {@link Optional}&lt;{@link Either.Right}&gt; if no SourceMessage with logical name for
+   *     <code>location</code> was found in <code>sourceMessages</code>. The {@link Pair} contains
+   *     the name and line number of location. <br>
+   *     <br>
+   *     An empty {@link Optional}, if SourcePath can be extracted from given <code>location</code>.
    */
   private Optional<Either<Pair<SourceMessage, Integer>, Pair<String, Integer>>>
       getSourceMessageForLocation(Location location) {
@@ -312,8 +309,8 @@ public class JavaDebugSession {
           sourceMessages
               .stream()
               .filter(
-                  sourceMessages
-                      -> sourceMessages.getSource().getLogicalName().isPresent()
+                  sourceMessages ->
+                      sourceMessages.getSource().getLogicalName().isPresent()
                           && sourceMessages
                               .getSource()
                               .getLogicalName()
